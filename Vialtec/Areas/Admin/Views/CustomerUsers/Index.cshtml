@@ -1,0 +1,236 @@
+﻿@model PaginatedList<Utilitarios.CustomerUser>
+
+@{
+    if (User.IsInRole("Admin"))
+    {
+        Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+    } else if (User.IsInRole("CustomerAdmin"))
+    {
+        Layout = "~/Views/Shared/_Layout.cshtml";
+    }
+    ViewData["Title"] = "Index";
+    int totalPages = (int)ViewData["totalPages"];
+    var customerInfos = ViewData["customerInfos"] as List<Utilitarios.CustomerInfo>;
+}
+
+<br />
+<h5 class="text-muted d-block text-center" style="font-family: 'Century Gothic';">USUARIOS</h5>
+<hr />
+<div class="row justify-content-center">
+    <div class="col-md-10 col-sm-12 table-responsive">
+        <div class="row mb-2">
+            <div class="col-md-4 col-sm-12 mb-1">
+                <a asp-action="Create" class="btn btn-sm btn-info">Agregar&nbsp;&nbsp;<i class="fas fa-plus"></i></a>
+                @if (User.IsInRole("Admin"))
+                {
+                    <div class="float-right">
+                        <a class="btn btn-sm btn-outline-warning" asp-action="Index" data-toggle="tooltip" title="Deshacer filtros">
+                            <i class="fas fa-sync"></i>
+                        </a>
+                    </div>
+                }
+            </div>
+            @if (User.IsInRole("Admin"))
+            {
+                <div class="col-md-8 col-sm-12">
+                    <form asp-action="Index" method="get" id="formFilter">
+                        <div class="row">
+                            <div class="col-4">
+                                <select name="customerInfoId" class="form-control form-control-sm"
+                                        onchange="document.getElementById('formFilter').submit();">
+                                    <option value="-1">-Cliente-</option>
+                                    @foreach (var c in customerInfos)
+                                    {
+                                        @if (c.Id == Convert.ToInt32(@ViewData["customerInfoId"]))
+                                        {
+                                            <option value="@c.Id" selected>@c.Title</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@c.Id">@c.Title</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <input class="form-control form-control-sm" type="text" name="email" placeholder="Email:" value="@ViewData["email"]" />
+                            </div>
+                            <div class="col-4">
+                                <input type="submit" value="Filtrar" class="btn btn-block btn-sm btn-outline-info" />
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            }
+        </div>
+        <table class="table table-sm table-bordered mt-2">
+            <thead class="thead-dark text-center">
+                <tr>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].Email)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].CustomerInfo)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].IsRoot)
+                    </th>
+                    <th>Permisos</th>
+                    <th colspan="2">Opciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (ViewBag.emptyMessage != null)
+                {
+                    <tr>
+                        <td colspan="6" class="text-center">
+                            <b class="text-muted">@ViewBag.emptyMessage</b>
+                        </td>
+                    </tr>
+                }
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="pl-2">
+                            @Html.DisplayFor(modelItem => item.Email)
+                        </td>
+                        <td class="pl-2">
+                            @Html.DisplayFor(modelItem => item.CustomerInfo.Title)
+                        </td>
+
+                        <td class="pl-2 text-center">
+                            @if (item.IsRoot)
+                            {
+                                <span class="badge badge-success">Admin</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-primary">Usuario</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            <input type="hidden" class="customerUserId" value="@item.Id" />
+                            <a class="btn btn-sm btn-outline-success ver-permisos">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                        @if (User.IsInRole("CustomerAdmin"))
+                        {
+                            <td class="text-center">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </td>
+                            <td class="text-center">
+                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        }
+                        else if (User.IsInRole("Admin"))
+                        {
+                            string disabled = item.IsRoot ? "" : "disabled";
+                            <td class="text-center">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary @disabled">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </td>
+                            <td class="text-center">
+                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger @disabled">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div class="text-center">
+            @{
+                var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
+                var nextDisabled = !Model.HasNextPage ? "disabled" : "";
+            }
+            @if (totalPages > 1)
+            {
+                <a asp-action="Index"
+                   asp-route-pageNumber="@(Model.PageIndex - 1)"
+                   asp-route-username="@ViewData["username"]"
+                   class="btn btn-sm btn-outline-info @prevDisabled">
+                    <i class="fas fa-angle-left"></i>
+                </a>
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    string badgeClass = i == Model.PageIndex ? "badge-info" : "badge-light text-muted";
+                    <a asp-action="Index"
+                       asp-route-username="@ViewData["username"]"
+                       asp-route-pageNumber="@i">
+                        <span class="number-page badge @badgeClass" style="transition: 0.5s;">@i</span>
+                    </a>
+                }
+                <a asp-action="Index"
+                   asp-route-username="@ViewData["username"]"
+                   asp-route-pageNumber="@(Model.PageIndex + 1)"
+                   class="btn btn-sm btn-outline-info @nextDisabled">
+                    <i class="fas fa-angle-right"></i>
+                </a>
+            }
+        </div>
+    </div>
+</div>
+<br />
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header py-2 px-3">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="form-group">
+                    <b class="text-muted">Usuario:&nbsp;</b>&nbsp;
+                    <span id="userEmail"></span>
+                </div>
+                <div class="form-group" id="group-permisos">
+                    <b class="text-muted">Permisos</b><br />
+                    @*permisoss*@
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script type="text/javascript" src="~/js/navigation.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function (e) {
+            $('.ver-permisos').click(function (e) {
+                var customerUserId = $(this).closest('td').find('.customerUserId').val();
+                $.ajax({
+                    url: "@Url.Action("GetSinglePermissionsByUser", "CustomerUsers")",
+                    data: {
+                        customerUserId
+                    },
+                    type: "get"
+                }).done(function (results) {
+                    $('#exampleModal .modal-body #group-permisos span').remove();
+                    $('#userEmail').html(results.customerUser.email);
+                    if (results.singlePermissionsTitles.length != 0) {
+                        results.singlePermissionsTitles.forEach(title => {
+                            let permiso = `<span class="badge badge-primary mb-2 mr-2" style="cursor: pointer; font-size: 14px;">${title}</span>`;
+                            $('#exampleModal .modal-body #group-permisos').append(permiso);
+                        });
+                    } else {
+                        let emptyMsg = `<span class="text-warning">No se encontraron permisos para el usuario</span>`;
+                        $('#exampleModal .modal-body #group-permisos').append(emptyMsg);
+                    }
+                    $('#exampleModal').modal('show');
+                }).fail(function (xhr, status, error) {
+                    console.error(xhr);
+                });
+            });
+        });
+    </script>
+}

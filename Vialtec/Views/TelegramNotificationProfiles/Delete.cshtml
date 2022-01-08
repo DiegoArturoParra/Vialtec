@@ -1,0 +1,91 @@
+﻿@model Utilitarios.TelegramNotificationProfile
+
+@using Newtonsoft.Json
+
+@{
+    ViewData["Title"] = "Delete";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<br />
+<div class="row justify-content-center">
+    <div class="col-md-6 col-sm-8 col-xs-12">
+        <a class="btn btn-sm btn-outline-info animate__animated animate__backInUp" asp-action="Index">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div class="card shadow animate__animated animate__backInDown">
+            <div class="card-header">
+                <b class="text-muted d-block text-center">¿Estás seguro de eliminar este perfil de notificación?</b>
+            </div>
+            <div class="card-body">
+                <dl class="dl-horizontal">
+                    <dt class="text-muted">
+                        @Html.DisplayNameFor(model => model.Title)
+                    </dt>
+                    <dd>
+                        @Html.DisplayFor(model => model.Title)
+                    </dd>
+                    <dt class="text-muted">
+                        @Html.DisplayNameFor(model => model.Description)
+                    </dt>
+                    <dd>
+                        @Html.DisplayFor(model => model.Description)
+                    </dd>
+                    <dt class="text-muted">
+                        @Html.DisplayNameFor(model => model.ChatIDS)
+                    </dt>
+                    <dd>
+                        @foreach (var chatID in JsonConvert.DeserializeObject<ChatIDS>(Model.ChatIDS).Telegram_Chat_Ids)
+                        {
+                            <span class="badge badge-info">@chatID</span>
+                        }
+                    </dd>
+                </dl>
+            </div>
+            @{ 
+                string display = ViewData["foreingKeyMessage"] != null ? "d-none" : "";
+            }
+            <div class="card-footer @display">
+                <div class="row justify-content-center">
+                    <div class="col-md-6 col-sm-8">
+                        <form asp-action="Delete" id="formDelete">
+                            <input type="hidden" asp-for="Id" />
+                        </form>
+                        <input type="button" value="Eliminar" id="btn-eliminar" class="btn btn-block btn-outline-danger" />
+                    </div>
+                </div>
+            </div>
+        </div>
+        @if (ViewData["foreingKeyMessage"] != null)
+        {
+            <div class="alert alert-warning animate__animated animate__backInUp">
+                <span>@ViewData["foreingKeyMessage"]</span>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts{
+    <script type="text/javascript">
+        $(document).ready(function (e) {
+
+            $('#btn-eliminar').click(function (e) {
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "No podrás revertir los cambios",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.value) {
+                        $('#formDelete').submit();
+                    }
+                })
+            });
+        });
+    </script>
+}
+

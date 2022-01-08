@@ -1,0 +1,371 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vialab</title>
+    <link rel="Shortcut Icon" href="~/vialab.ico" type="image/x-icon" />
+
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="~/plugins/fontawesome-free/css/all.min.css">
+    <!-- Ionicons -->
+    <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <!-- Theme style bootstrap -->
+    <link rel="stylesheet" href="~/css/adminlte.min.css">
+    <!-- Google Font: Source Sans Pro -->
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
+    @*SweetAlert*@
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+    @*Animate Css*@
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css" />
+    @*Img responsive*@
+    <link rel="stylesheet" href="~/css/img-responsive.css" />
+    @*Shared Css*@
+    <link rel="stylesheet" href="~/css/shared.css" />
+    @*Bootstrap toggle button*@
+    <link href="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/css/bootstrap4-toggle.min.css" rel="stylesheet">
+
+    @RenderSection("Styles", required: false)
+</head>
+<body>
+    <partial name="_CookieConsentPartial" />
+
+    <div class="wrapper">
+        <!-- Navbar -->
+        <nav class="main-header navbar navbar-expand navbar-white navbar-light text-sm" style="background-color: #1d71b8;">
+            <!-- Left navbar links -->
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link text-white" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+                </li>
+                <li class="nav-item d-none d-sm-inline-block">
+                    <a asp-controller="home" asp-action="index" class="nav-link text-white">Inicio</a>
+                </li>
+            </ul>
+
+            <!-- Right navbar links -->
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link text-white" data-widget="control-sidebar" data-slide="true" href="#" role="button">
+                        <i class="fas fa-th-large"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <!-- /.navbar -->
+        <!-- Main Sidebar Container -->
+        @*<aside class="main-sidebar sidebar-dark-primary elevation-4 text-sm">*@
+        <aside class="main-sidebar elevation-4 text-sm" style="background-color: #1d71b8;">
+            <!-- Brand Logo -->
+            <a asp-controller="home" asp-action="index" class="brand-link">
+                <img src="~/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3"
+                     style="opacity: .8">
+                <span class="brand-text font-weight-light text-white">Vialab</span>
+            </a>
+
+            <hr class="text-white m-0" />
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Sidebar user panel (optional) -->
+                <div class="user-panel mt-3 pb-3 mb-3 d-flex" style="border-bottom: solid 1px #ccc;">
+                    <div class="image">
+                        <img src="~/img/av7.jpg" class="img-circle elevation-2" alt="User Image">
+                    </div>
+                    <div class="info">
+                        <a asp-controller="CustomerUsers" asp-action="Details" class="d-block text-white">
+                            @if (User.Identity.Name.Length > 20)
+                            {
+                                @User.Identity.Name.Substring(0, 20)<span>...</span>
+                            }
+                            else
+                            {
+                                @User.Identity.Name
+                            }
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Sidebar Menu -->
+                <nav class="mt-2">
+                    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                        <li class="nav-item">
+                            <a class="nav-link text-white" asp-controller="home" asp-action="index">
+                                <i class="nav-icon fas fa-th"></i>
+                                <p>
+                                    Inicio
+                                </p>
+                            </a>
+                        </li>
+                        <li class="nav-item has-treeview">
+                            <a href="#" class="nav-link text-white">
+                                <i class="nav-icon fas fa-bus-alt"></i>
+                                <p>
+                                    Activos viales
+                                    <i class="fas fa-angle-left right"></i>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview ml-3">
+                                <li class="nav-item">
+                                    <a asp-controller="EquipmentGroups" asp-action="Index" class="nav-link text-white">
+                                        <i class="fas fa-angle-double-right nav-icon"></i>
+                                        <p>Grupos</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a asp-controller="Equipments" asp-action="Index" class="nav-link text-white">
+                                        <i class="fas fa-angle-double-right nav-icon"></i>
+                                        <p>Dispositivos</p>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="nav-item has-treeview">
+                            <a href="#" class="nav-link text-white">
+                                <i class="nav-icon fas fa-user-astronaut"></i>
+                                <p>
+                                    Trabajo de campo
+                                    <i class="fas fa-angle-left right"></i>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview ml-3">
+                                <li class="nav-item">
+                                    <a asp-controller="Projects" asp-action="Index" class="nav-link text-white">
+                                        <i class="fas fa-angle-double-right nav-icon"></i>
+                                        <p>Proyectos</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a asp-controller="Subprojects" asp-action="Index" class="nav-link text-white">
+                                        <i class="fas fa-angle-double-right nav-icon"></i>
+                                        <p>Actividades</p>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="nav-item has-treeview">
+                            <a href="#" class="nav-link text-white">
+                                <i class="nav-icon fas fa-road"></i>
+                                <p>
+                                    Reportes
+                                    <i class="fas fa-angle-left right"></i>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview ml-3">
+                                <li class="nav-item">
+                                    <a asp-controller="Reflectivities" asp-action="Index" class="nav-link text-white">
+                                        <i class="fas fa-angle-double-right nav-icon"></i>
+                                        <p>Retroreflectividad</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a asp-controller="Location" asp-action="Index" class="nav-link text-white">
+                                        <i class="fas fa-angle-double-right nav-icon"></i>
+                                        <p>Localización</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a asp-controller="Marking" asp-action="Index" class="nav-link text-white">
+                                        <i class="fas fa-angle-double-right nav-icon"></i>
+                                        <p>Demarcación</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a asp-controller="TransmissionsInfo" asp-action="Index" class="nav-link text-white">
+                                        <i class="fas fa-angle-double-right nav-icon"></i>
+                                        <p>Histórico</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a asp-controller="CoefficientFriction" asp-action="Index" class="nav-link text-white">
+                                        <i class="fas fa-angle-double-right nav-icon"></i>
+                                        <p>Coeficiente de fricción</p>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="nav-item has-treeview">
+                            <a href="#" class="nav-link text-white">
+                                <i class="nav-icon fas fa-tachometer-alt"></i>
+                                <p>
+                                    Radar de velocidad
+                                    <i class="fas fa-angle-left right"></i>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview ml-3">
+                                <li class="nav-item">
+                                    <a asp-controller="RadarSpeeds" asp-action="Index" class="nav-link text-white">
+                                        <i class="fas fa-angle-double-right nav-icon"></i>
+                                        <p>Reporte de velocidades</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-white" asp-controller="SpeedReportCustomers" asp-action="index">
+                                        <i class="fas fa-angle-double-right nav-icon"></i>
+                                        <p>Plantilla de reportes</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-white" asp-controller="CustomVehicleTypes" asp-action="index">
+                                        <i class="fas fa-angle-double-right nav-icon"></i>
+                                        <p>Categorías de plantilla</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a asp-controller="SpeedStatReports" asp-action="Index" class="nav-link text-white">
+                                        <i class="fas fa-angle-double-right nav-icon"></i>
+                                        <p>Radar con estadística</p>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="nav-item has-treeview">
+                            <a href="#" class="nav-link text-white">
+                                <i class="nav-icon fas fa-bell"></i>
+                                <p>
+                                    Alarmas de eventos
+                                    <i class="fas fa-angle-left right"></i>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview ml-3">
+                                <li class="nav-item">
+                                    <a asp-controller="EmailNotificationProfiles" asp-action="Index" class="nav-link text-white">
+                                        <i class="fas fa-angle-double-right nav-icon"></i>
+                                        <p>Notificación por correo</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a asp-controller="TelegramNotificationProfiles" asp-action="Index" class="nav-link text-white">
+                                        <i class="fas fa-angle-double-right nav-icon"></i>
+                                        <p>Notificación por Telegram</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a asp-controller="CustomerEventNotifications" asp-action="Index" class="nav-link text-white">
+                                        <i class="fas fa-angle-double-right nav-icon"></i>
+                                        <p>Alarmas generales</p>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="nav-item has-treeview">
+                            <a href="#" class="nav-link text-white">
+                                <i class="nav-icon far fa-sun"></i>
+                                <p>
+                                    Gestión remota
+                                    <i class="fas fa-angle-left right"></i>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview ml-3">
+                                <li class="nav-item">
+                                    <a asp-controller="SendCommand" asp-action="Index" class="nav-link text-white">
+                                        <i class="fas fa-angle-double-right nav-icon"></i>
+                                        <p>Comandos</p>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+
+                        @if (User.IsInRole("CustomerAdmin"))
+                        {
+                            <li class="nav-item has-treeview">
+                                <a href="#" class="nav-link text-white">
+                                    <i class="nav-icon far fa-user-circle"></i>
+                                    <p>
+                                        Administrador
+                                        <i class="fas fa-angle-left right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview ml-3">
+                                    <li class="nav-item">
+                                        <a class="nav-link text-white" asp-area="Admin" asp-controller="CustomerUsers" asp-action="Index">
+                                            <i class="nav-icon fas fa-users"></i>
+                                            <p>Usuarios</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item ">
+                                        <a class="nav-link text-white" asp-controller="PrecommandByUsers" asp-action="Index">
+                                            <i class="nav-icon fas fa-biohazard"></i>
+                                            <p>Permisos de comandos</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item ">
+                                        <a class="nav-link text-white" asp-area="Admin" asp-controller="CustomerUserPermissions" asp-action="Index">
+                                            <i class="nav-icon fas fa-shield-alt"></i>
+                                            <p>Permisos de acceso</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item ">
+                                        <a class="nav-link text-white" asp-controller="Profile" asp-action="Index">
+                                            <i class="nav-icon fas fa-image"></i>
+                                            <p>Cambiar logo</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+                <!-- /.sidebar-menu -->
+            </div>
+            <!-- /.sidebar -->
+        </aside>
+
+        <!-- Content Wrapper. Contains page content -->
+        <div class="content-wrapper" style="background-color: #fff !important;">
+            <!-- Main content -->
+            <section class="content">
+                <div class="container">
+                    @RenderBody()
+                </div><!-- /.container-fluid -->
+            </section>
+            <!-- /.content -->
+        </div>
+        <!-- /.content-wrapper -->
+        <footer class="main-footer text-sm">
+            <strong>Copyright &copy;&nbsp;Vialab.</strong>
+            All rights reserved
+            <div class="float-right d-none d-sm-inline-block">
+                <b>Version</b> 1.0.0
+            </div>
+        </footer>
+
+        <!-- Control Sidebar -->
+        @*<aside class="control-sidebar control-sidebar-dark">*@
+        <aside class="control-sidebar control-sidebar-light">
+            <!-- Control sidebar content goes here -->
+            <div class="container mt-2">
+                <ul class="nav flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                    <li class="nav-item">
+                        <a asp-controller="Account" asp-action="Logout" class="btn btn-block btn-outline-dark">
+                            <i class="fas fa-sign-out-alt"></i>&nbsp;
+                            Cerrar sesión
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </aside>
+        <!-- /.control-sidebar -->
+    </div>
+    <!-- ./wrapper -->
+    <!-- Template AdminLTE Scripts -->
+    <!-- jQuery -->
+    <script src="~/plugins/jquery/jquery.min.js"></script>
+    <!-- jQuery UI 1.11.4 -->
+    <script src="~/plugins/jquery-ui/jquery-ui.min.js"></script>
+    <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
+    <script>
+        $.widget.bridge('uibutton', $.ui.button)
+    </script>
+    <!-- Bootstrap 4 -->
+    <script src="~/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <!-- AdminLTE App -->
+    <script src="~/js/adminlte.js"></script>
+    <!-- Bootstrap toggle button -->
+    <script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/js/bootstrap4-toggle.min.js"></script>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

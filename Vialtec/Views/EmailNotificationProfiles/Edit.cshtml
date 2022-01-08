@@ -1,0 +1,78 @@
+﻿@model Utilitarios.EmailNotificationProfile
+@using Newtonsoft.Json
+
+@{
+    ViewData["Title"] = "Edit";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<br />
+<div class="row justify-content-center">
+    <div class="col-md-8 col-sm-10 col-xs-12">
+        <a class="btn btn-sm btn-outline-info animate__animated animate__backInUp" asp-action="Index">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <form asp-action="Edit" id="form1">
+            <div class="card shadow animate__animated animate__backInDown">
+                <div class="card-header">
+                    <b class="text-muted d-block text-center">Editar perfil de notificación de correos</b>
+                </div>
+                <div class="card-body row">
+                    <div class="col-md-6 col-sm-12">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="CustomerInfoId" />
+                        <div class="form-group">
+                            <label asp-for="Title" class="control-label text-muted"></label>
+                            <input asp-for="Title" class="form-control" />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Description" class="control-label text-muted"></label>
+                            <textarea asp-for="Description" class="form-control" rows="5"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-sm-12">
+                        <input type="hidden" asp-for="EmailAddress" />
+                        <div class="form-group">
+                            <b class="text-muted d-block mb-2">Correos electrónicos</b>
+                            <div class="input-group">
+                                <input type="text" autocomplete="off" id="new-email" class="form-control" placeholder="example@mail.com">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-info" id="btn-new-email" type="button">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <b class="text-muted d-block mb-2">Agregados</b>
+                        <div style="max-height: 200px; overflow: auto;" id="emails-container">
+                            @*aqui se mostrarán los emails que se vayan agregando*@
+                            @foreach (var email in JsonConvert.DeserializeObject<EmailAddress>(Model.EmailAddress).Email_Address)
+                            {
+                                <div class="btn-group btn-group-sm mb-2" role="group">
+                                    <button type="button" class="btn btn-light"> @email </button>
+                                    <button type="button" class="btn btn-danger btn-delete-email" id="@email"><i class="fas fa-trash"></i></button>
+                                </div>
+                            }
+                        </div>
+                        </div>
+                    </div>
+                    <div class="card-footer text-center">
+                        <div class="row justify-content-center">
+                            <div class="col-md-6 col-sm-10">
+                                <input type="submit" value="Agregar" class="btn btn-block btn-outline-info" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @section Scripts {
+        @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+        <script type="text/javascript" src="~/js/emails-notification-update.js"></script>
+    }

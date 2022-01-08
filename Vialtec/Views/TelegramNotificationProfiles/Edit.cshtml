@@ -1,0 +1,154 @@
+﻿@model Utilitarios.TelegramNotificationProfile
+
+@using Newtonsoft.Json
+
+@{
+    ViewData["Title"] = "Edit";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<br />
+<div class="row justify-content-center">
+    <div class="col-md-8 col-sm-10 col-xs-12">
+        <a class="btn btn-sm btn-outline-info animate__animated animate__backInUp" asp-action="Index">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <form asp-action="Edit" id="form1">
+            <div class="card shadow animate__animated animate__backInDown">
+                <div class="card-header">
+                    <b class="text-muted d-block text-center">Editar perfil de notificación de telegram</b>
+                </div>
+                <div class="card-body row">
+                    <div class="col-md-6 col-sm-12">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="CustomerInfoId" />
+                        <div class="form-group">
+                            <label asp-for="Title" class="control-label text-muted"></label>
+                            <input asp-for="Title" class="form-control" />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Description" class="control-label text-muted"></label>
+                            <textarea asp-for="Description" class="form-control" rows="5"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-sm-12">
+                        <input type="hidden" asp-for="ChatIDS" />
+                        <div class="form-group">
+                            <b class="text-muted d-block mb-2">Chats IDs Telegram</b>
+                            <div class="input-group">
+                                <input type="text" autocomplete="off" id="new-chat-id" class="form-control" placeholder="357986162">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-info" id="btn-new-chat-id" type="button">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <b class="text-muted d-block mb-2">Agregados</b>
+                        <div style="max-height: 200px; overflow: auto;" id="chat-ids-container">
+                            @*aqui se mostrarán los chat ids que se vayan agregando*@
+                            @foreach (var chatID in JsonConvert.DeserializeObject<ChatIDS>(Model.ChatIDS).Telegram_Chat_Ids)
+                            {
+                                <div class="btn-group btn-group-sm mb-2" role="group">
+                                    <button type="button" class="btn btn-light"> @chatID </button>
+                                    <button type="button" class="btn btn-danger btn-delete-chat-id" id="@chatID"><i class="fas fa-trash"></i></button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <div class="row justify-content-center">
+                        <div class="col-md-6 col-sm-10">
+                            <input type="submit" value="Actualizar" class="btn btn-block btn-outline-info" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script type="text/javascript">
+        $(document).ready(function (e) {
+
+            $('#new-chat-id').keypress(function (e) {
+                if (isNaN(e.key) || $(this).val().length === 15) {
+                    e.preventDefault();
+                }
+            });
+
+            var chat_ids = [];
+
+            // agregar al array los emails que ya existen en el modelo
+            $('#chat-ids-container .btn-group .btn-delete-chat-id').each(function (e) {
+                const chat_id = $(this).attr('id');
+                chat_ids.push(chat_id);
+            });
+
+            $('#form1').submit(function (e) {
+                if (chat_ids.length === 0) {
+                    e.preventDefault();
+                    Swal.fire('Error', 'No has agregado ningún Chat ID para el perfil de notificaciones', 'error');
+                }
+            });
+
+            $('#btn-new-chat-id').click((e) => {
+                const newChatID = $('#new-chat-id').val();
+                if (newChatID !== '') {
+                    if (chat_ids.includes(newChatID)) {
+                        alert('El Chat ID ya existe en el listado');
+                    } else {
+                        if (newChatID.length >= 9) {
+                            chat_ids.push(newChatID);
+                            refreshEmailsTable();
+                        } else {
+                            alert('Chat ID demasiado corto');
+                        }
+                    }
+                    $('#new-chat-id').val('');
+                }
+            });
+
+            $('#chat-ids-container').on('click', '.btn-delete-chat-id', function (e) {
+                const chat_id_to_delete = $(this).attr('id');
+                chat_ids = chat_ids.filter(x => x !== chat_id_to_delete);
+                refreshEmailsTable();
+            });
+
+            refreshEmailsTable = () => {
+                $('#chat-ids-container .btn-group').remove();
+
+                if (chat_ids.length === 0) {
+                    const chatSpan = `
+                                    <div class="btn-group btn-group-sm" role="group">
+                                      <button type="button" class="btn btn-light">Ninguno</button>
+                                    </div>
+                                `;
+                    $('#chat-ids-container').append(chatSpan);
+                } else {
+                    chat_ids.forEach(email => {
+                        const chatIDGroupButton = `
+                                    <div class="btn-group btn-group-sm mb-2" role="group">
+                                      <button type="button" class="btn btn-light">${ email}</button>
+                                      <button type="button" class="btn btn-danger btn-delete-chat-id" id="${ email}"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                `;
+                        $('#chat-ids-container').append(chatIDGroupButton);
+                    });
+                }
+                // asignar el valor para el input hidden de emails
+                $('#ChatIDS').val(chat_ids.join('#'));
+            };
+
+            // Llamada inicial
+            refreshEmailsTable();
+        });
+    </script>
+}

@@ -1,0 +1,93 @@
+﻿@model Utilitarios.DistributorUser
+
+@{
+    ViewData["Title"] = "Delete";
+    Layout = "~/Areas/SuperAdmin/Views/Shared/_LayoutSuperAdmin.cshtml";
+}
+
+<br />
+<div class="row justify-content-center">
+    <div class="col-md-6 col-sm-8 col-xs-12">
+        <a class="btn btn-sm btn-outline-info animate__animated animate__backInUp" asp-action="Index">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div class="card shadow animate__animated animate__backInDown">
+            <div class="card-header">
+                <b class="text-muted d-block text-center">¿Estás seguro de eliminar este usuario distribuidor?</b>
+            </div>
+            <div class="card-body">
+                <dl class="dl-horizontal">
+                    <dt class="text-muted">
+                        @Html.DisplayNameFor(model => model.Email)
+                    </dt>
+                    <dd class="">
+                        @Html.DisplayFor(model => model.Email)
+                    </dd>
+                    <dt class="text-muted">
+                        @Html.DisplayNameFor(model => model.SecurityProfileDist)
+                    </dt>
+                    <dd class="">
+                        @Html.DisplayFor(model => model.SecurityProfileDist.Title)
+                    </dd>
+                    <dt class="text-muted">
+                        @Html.DisplayNameFor(model => model.DistributorInfo)
+                    </dt>
+                    <dd class="">
+                        @Html.DisplayFor(model => model.DistributorInfo.Title)
+                    </dd>
+                </dl>
+            </div>
+            <div class="card-footer">
+                <div class="row justify-content-center">
+                    <div class="col-md-6 col-sm-8">
+                        <input type="hidden" asp-for="Id" />
+                        <input type="button" value="Eliminar" id="btn-eliminar" class="btn btn-block btn-outline-danger" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script type="text/javascript">
+        $(document).ready(function (e) {
+
+            $(document).ajaxStart(function (e) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Espere por favor',
+                    text: 'Eliminando',
+                    allowOutsideClick: false
+                });
+                Swal.showLoading();
+            });
+            $(document).ajaxComplete(function (e) {
+                Swal.close();
+            });
+
+            $('#btn-eliminar').click(function (e) {
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "No podrás revertir los cambios",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.value) {
+                        $.ajax({
+                            url: "@Url.Action("Delete", "DistributorUsers")",
+                            data: $('#Id').val(),
+                            type: "post"
+                        }).done(function (e) {
+                            window.location.href = "@Url.Action("Index", "DistributorUsers")";
+                        });
+                    }
+                })
+            });
+        });
+    </script>
+}

@@ -1,0 +1,69 @@
+﻿@model Utilitarios.TelegramBot
+
+@{
+    ViewData["Title"] = "Delete";
+    Layout = "~/Areas/SuperAdmin/Views/Shared/_LayoutSuperAdmin.cshtml";
+}
+
+<br />
+<div class="row justify-content-center">
+    <div class="col-md-6 col-sm-8 col-xs-12">
+        <a class="btn btn-sm btn-outline-info animate__animated animate__backInUp" asp-action="Index">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div class="card shadow animate__animated animate__backInDown">
+            <div class="card-header">
+                <b class="text-muted d-block text-center">¿Estás seguro de eliminar este TelegramBot?</b>
+            </div>
+            <div class="card-body">
+                <dl class="dl-horizontal">
+                    <dt class="text-muted">
+                        @Html.DisplayNameFor(model => model.Title)
+                    </dt>
+                    <dd>
+                        @Html.DisplayFor(model => model.Title)
+                    </dd>
+                    <dt class="text-muted">
+                        @Html.DisplayNameFor(model => model.AccessToken)
+                    </dt>
+                    <dd>
+                        @Html.DisplayFor(model => model.AccessToken)
+                    </dd>
+                </dl>
+            </div>
+            <div class="card-footer">
+                <div class="row justify-content-center">
+                    <div class="col-md-6 col-sm-8">
+                        <form asp-action="Delete" id="formDelete">
+                            <input type="hidden" asp-for="Id" />
+                        </form>
+                        <input type="button" value="Eliminar" id="btn-eliminar" class="btn btn-block btn-outline-danger" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script type="text/javascript">
+        $(document).ready(function (e) {
+            $('#btn-eliminar').click(function (e) {
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "No se podrán enviar las notificaciones por Telegram",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.value) {
+                        $('#formDelete').submit();
+                    }
+                })
+            });
+        });
+    </script>
+}

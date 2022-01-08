@@ -1,0 +1,293 @@
+﻿
+@{
+    Layout = null;
+    var equipmentGroups = ViewData["equipmentGroups"] as List<Utilitarios.EquipmentGroup>;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Vialab</title>
+    <link rel="Shortcut Icon" href="~/vialab.ico" type="image/x-icon" />
+
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="~/plugins/fontawesome-free/css/all.min.css">
+    <!-- Ionicons -->
+    <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <!-- Theme style -->
+    <link rel="stylesheet" href="~/css/adminlte.min.css">
+    <!-- Google Font: Source Sans Pro -->
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
+    @*SweetAlert*@
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+    @*Animate Css*@
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css" />
+    @*Marking Css*@
+    <link rel="stylesheet" href="~/css/marking.css" />
+    @*Marking Draggable Css*@
+    <link rel="stylesheet" href="~/css/marking-draggable.css" />
+    @*FabButton css*@
+    <link rel="stylesheet" href="~/css/fab.css" />
+
+    @*Leaftel*@
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin="" />
+    <!-- Make sure you put this AFTER Leaflet's CSS -->
+    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==" crossorigin=""></script>
+
+</head>
+<body>
+
+    @*Draggable Card*@
+    <div id="card-draggable" style="width: 55% !important;" class="card d-none">
+        <div class="card-header" style="cursor: pointer;">
+            <b class="text-muted">TRAMOS</b>
+            <button type="button" id="close-tramas" class="close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+
+        <div class="card-body" style="max-height: 310px; overflow: auto;">
+
+            <div class="float-right my-1">
+                <button type="button" id="btnExportarExcel" class="btn btn-sm btn-outline-info">
+                    Exportar <i class="fa fa-file-excel"></i>
+                </button>
+            </div>
+
+            <table id="TableMarking" class="table table-sm table-bordered">
+                <thead class="thead-dark text-muted text-center">
+                    <tr>
+                        <th>Fecha inicial</th>
+                        <th>Fecha final</th>
+                        <th>Tiempo</th>
+                        <th>Total metros</th>
+                        <th>Promedio velocidad</th>
+                        <th>Ver</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody-tramas" class="text-center">
+                    @*Tramas*@
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="checkAll" style="cursor: pointer;">
+                <label class="form-check-label" for="checkAll">
+                    Seleccionar todo
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark pl-5">
+        <div class="container">
+            <a asp-controller="Home" asp-action="Index" class="btn btn-sm btn-info mr-4">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <a class="navbar-brand" href="#" style="font-size: 15px;">
+                <i class="fas fa-fire"></i>&nbsp;
+                <span>Reporte de demarcación</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mr-auto"></ul>
+                <!-- Button trigger modal -->
+                <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#exampleModal">
+                    Filtros
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    @*Fab Button para el reporte*@
+    <div class="fab-container d-none" id="fab-container">
+        <div class="fab-main fab-icon-holder">
+            <i class="fas fa-table"></i>
+            <span class="badge badge-dark"></span>
+        </div>
+        <ul class="fab-options" id="fab-options">
+            <li>
+                <span class="fab-label" style="background: #00695c;">Consultar</span>
+            </li>
+            <li>
+                <span class="fab-label">Tramos</span>
+                <div class="fab-icon-holder" id="btn-tramas">
+                    <i class="fas fa-grip-lines"></i>
+                </div>
+            </li>
+            <li>
+                <span class="fab-label">Resumen</span>
+                <div class="fab-icon-holder" id="btn-resumen">
+                    <i class="fas fa-eye"></i>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    @*Map Leaftel*@
+    <div id="map">
+    </div>
+
+    <!-- Modal Filtros -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header py-2 pl-4">
+                    <b class="text-muted">REPORTE DE DEMARCACIÓN</b>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row justify-content-center">
+                        <div class="col-md-4 col-sm-6">
+                            <div class="form-group">
+                                <b class="text-muted">Grupos</b>
+                                <select class="form-control form-control-sm" id="equipmentGroupId">
+                                    @foreach (var equipGroup in equipmentGroups)
+                                    {
+                                        <option value="@equipGroup.Id">@equipGroup.Title</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-6">
+                            <b class="text-muted">Dispositivos</b>
+                            <select class="form-control form-control-sm" id="equipmentId">
+                                @*equipments*@
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row justify-content-center mt-2">
+                        <div class="col-sm-4 col-xs-6 mb-2">
+                            <b class="text-muted">Fecha inicial</b>
+                            <input type="datetime-local" id="datetime-inicial" class="form-control form-control-sm" value="@ViewData["datetime-inicial"]" />
+                        </div>
+                        <div class="col-sm-4 col-xs-6 mb-2">
+                            <b class="text-muted">Fecha final</b>
+                            <input type="datetime-local" id="datetime-final" class="form-control form-control-sm" value="@ViewData["datetime-final"]" />
+                        </div>
+                    </div>
+                    <div class="row justify-content-center mt-2">
+                        <div class="col-sm-4 col-xs-12">
+                            <b class="text-muted">Tipo Reporte</b>
+                            <br />
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="exampleRadios" id="reporte-traslado" value="traslado" checked>
+                                <b class="text-muted"><label class="form-check-label" for="reporte-traslado">Traslado</label></b>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="exampleRadios" id="reporte-demarcado" value="demarcado">
+                                <b class="text-muted"><label class="form-check-label" for="reporte-demarcado">Demarcación</label></b>
+                            </div>
+                            <br />
+                            <br />
+                        </div>
+                        <div id="col-min-meters" class="d-none col-sm-4 col-xs-12">
+                            <b class="text-muted">Mínimo metros del tramo</b>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="minMeters" class="form-control" value="50">
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="chkMinMeters" checked />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer p-2">
+                    <div class="row w-100 justify-content-center">
+                        <div class="col-md-4 col-sm-6">
+                            <button class="btn btn-sm btn-block btn-primary" id="btn-filtrar">Filtrar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Resumen -->
+    <div class="modal fade" id="modalSummary" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header py-2 pl-4">
+                    <b class="text-muted">RESUMEN DE DEMARCACIÓN</b>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-sm table-bordered">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th></th>
+                                <th>Izquierda</th>
+                                <th>Centro</th>
+                                <th>Derecha</th>
+                                <th>Costado Derecho</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><b>Metros aplicados</b></td>
+                                <td><span id="sumLeftPaintMeters"></span></td>
+                                <td><span id="sumCenterPaintMeters"></span></td>
+                                <td><span id="sumRightPaintMeters"></span></td>
+                                <td><span id="sumMostRightPaintMeters"></span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <br />
+                    <table class="table table-sm table-bordered">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Total metros aplicados</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span id="sumPaintMeters"></span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <br />
+                    <table class="table table-sm table-bordered">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Velocidad promedio aplicación</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span id="averageSpeed"></span> Km/h</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template AdminLTE Scripts -->
+    <!-- jQuery -->
+    <script src="~/plugins/jquery/jquery.min.js"></script>
+    <!-- jQuery UI 1.11.4 -->
+    <script src="~/plugins/jquery-ui/jquery-ui.min.js"></script>
+    <!-- Bootstrap 4 -->
+    <script src="~/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+    @*Marking js*@
+    <script src="~/js/marking.js"></script>
+    @*Marking Draggable*@
+    <script src="~/js/marking-draggable.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,36 @@
+﻿
+.fab-container {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 999;
+    cursor: pointer;
+}
+
+.fab-icon-holder {
+    width: 30px;
+    height: 30px;
+    border-radius: 100%;
+    background: #fff;
+    box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.fab-icon-holder:hover {
+    opacity: 0.8;
+}
+
+.fab-icon-holder i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-size: 18px;
+    color: #212529;
+}
+
+.fab-icon-holder .badge {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    border-radius: 100%;
+}

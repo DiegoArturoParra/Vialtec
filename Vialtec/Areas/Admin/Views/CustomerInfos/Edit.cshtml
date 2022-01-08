@@ -1,0 +1,151 @@
+﻿@model Utilitarios.CustomerInfo
+
+@{
+    ViewData["Title"] = "Edit";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<br />
+<div class="row justify-content-center">
+    <div class="col-md-8 col-sm-10 col-xs-12">
+        <a class="btn btn-sm btn-outline-info animate__animated animate__backInUp" asp-action="Index">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <form asp-action="Edit" id="form1">
+            <div class="card shadow animate__animated animate__backInDown">
+                <div class="card-header">
+                    <b class="text-muted d-block text-center">Editar Cliente</b>
+                </div>
+                <div class="card-body row">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="col-md-6 col-sm-12">
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="DistributorInfoId" />
+                        <div class="form-group">
+                            <label asp-for="Title" class="control-label text-muted"></label>
+                            <input asp-for="Title" class="form-control form-control-sm" />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="ZoneTime" class="control-label text-muted"></label>
+                            <input asp-for="ZoneTime" class="form-control form-control-sm" />
+                            <span asp-validation-for="ZoneTime" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="LogoBase64" class="control-label text-muted"></label>
+                            <div class="custom-file">
+                                <input type="file" class="custom-file-input" accept="image/*" id="img-upload" name="img-upload" required>
+                                <label class="custom-file-label" for="img-upload">Cambiar imagen</label>
+                                <input type="hidden" name="LogoBase64" id="LogoBase64" value="data:image/png;base64,@Model.LogoBase64" />
+                            </div>
+                            <span class="text-danger d-none" id="logo_validate">El Logo es requerido</span>
+                        </div>
+                        <img id="img-preview" width="300" height="250" class="d-none" src="data:image/png;base64,@Model.LogoBase64" />
+                    </div>
+                    <div class="col-md-6 col-sm-12">
+                        @if (!string.IsNullOrEmpty(Model.LogoBase64))
+                        {
+                            <img alt="image-alt" src="data:image/png;base64,@Model.LogoBase64" class="w-100" height="200" />
+                        }
+                        else
+                        {
+                            <img src="~/img/image-not-found.png" alt="img logo" class="w-100" height="200" />
+                        }
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <div class="row justify-content-center">
+                        <div class="col-md-6 col-sm-10">
+                            <input type="button" id="create-button" value="Actualizar" class="btn btn-block btn-outline-info" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script type="text/javascript">
+        $(document).ready(function (e) {
+            $('.custom-file-input').on('change', function () {
+                // Cambiar Label Input file
+                var filename = $(this).val().split('\\')[2];
+                $(this).next('.custom-file-label').html(filename);
+
+                // File y Preview
+                var preview = $('#img-preview')[0];
+                var file = $('#img-upload')[0].files[0];
+                var reader = new FileReader();
+                // reader
+                reader.onloadend = function () {
+                    preview.src = reader.result;
+                }
+                if (file) {
+                    reader.readAsDataURL(file);
+                } else {
+                    preview.src = $('#LogoBase64').val();
+                    $(this).next('.custom-file-label').html('Cambiar imagen');
+                }
+            });
+
+            $('#create-button').click(function (e) {
+
+                const title = $('#Title').val().trim();
+                const zoneTime = $('#ZoneTime').val().trim();
+                if (title === '' || zoneTime === '') {
+                    e.preventDefault();
+                    Swal.fire('Error', 'Es necesario completar todos los campos', 'error');
+                    return;
+                }
+
+                var dataUrl = $('#img-preview').attr('src');
+
+                if (dataUrl === '' || dataUrl === undefined) {
+                    $('#logo_validate').removeClass('d-none');
+                    e.preventDefault();
+                    return;
+                } else {
+                    $('#logo_validate').addClass('d-none');
+                    $('#LogoBase64').val(dataUrl);
+                }
+
+                if ($('#Title').val() !== '' && dataUrl !== '' && dataUrl !== undefined) {
+                    $.ajax({
+                        url: "@Url.Action("Edit", "CustomerInfos")",
+                        data: $('#form1').serialize(),
+                        type: "post"
+                    })
+                    .done(function (response) {
+                        console.log(response);
+                        if (response === true) {
+                            window.location.href = "@Url.Action("Index", "CustomerInfos")";
+                        }
+                    })
+                    .fail(function (xhr, status, error) {
+                        console.error(error);
+                    });
+
+                } else {
+                    e.preventDefault();
+                }
+            });
+            // Ajax
+            $(document).ajaxStart(function (e) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Espere por favor',
+                    text: 'Cargando información',
+                    allowOutsideClick: false
+                });
+                Swal.showLoading();
+            });
+
+            $(document).ajaxComplete(function (e) {
+                Swal.close();
+            });
+        });
+    </script>
+}

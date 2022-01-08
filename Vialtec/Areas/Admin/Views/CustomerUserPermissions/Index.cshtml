@@ -1,0 +1,163 @@
+﻿@model IEnumerable<Utilitarios.CustomerUser>
+
+@{
+    if (User.IsInRole("Admin"))
+    {
+        Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+    }
+    else if (User.IsInRole("CustomerAdmin"))
+    {
+        Layout = "~/Views/Shared/_Layout.cshtml";
+    }
+    ViewData["Title"] = "Index";
+    var customerInfos = ViewData["customerInfos"] as List<Utilitarios.CustomerInfo>;
+}
+
+<br />
+<h5 class="text-muted d-block text-center" style="font-family: 'Century Gothic';">PERMISOS DE ACCESO</h5>
+<hr />
+
+<div class="container text-center d-none mt-3" id="loading">
+    <div class="spinner-grow" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
+</div>
+<div class="row justify-content-center mt-3">
+
+    @if (Model.Count() == 0)
+    {
+        <div class="col-12">
+            <div class="alert alert-light">
+                <b class="text-muted">No se encontraron registros</b>
+            </div>
+        </div>
+    }
+
+    <div class="col-12 mb-4">
+        @if (User.IsInRole("Admin"))
+        {
+            <div class="row">
+                <div class="col-4">
+                    <form asp-action="Index" method="get" id="form-filter">
+                        <select name="customerInfoId" class="form-control form-control-sm"
+                                onchange="document.getElementById('form-filter').submit();">
+                            <option value="-1">-Cliente-</option>
+                            @foreach (var c in customerInfos)
+                            {
+                                @if (c.Id == Convert.ToInt32(@ViewData["customerInfoId"]))
+                                {
+                                    <option value="@c.Id" selected>@c.Title</option>
+                                }
+                                else
+                                {
+                                    <option value="@c.Id">@c.Title</option>
+                                }
+                            }
+                        </select>
+                    </form>
+                </div>
+                <div class="col-8">
+                    <a class="btn btn-sm btn-outline-warning" asp-action="Index"
+                        data-toggle="tooltip" title="Deshacer filtros">
+                        <i class="fas fa-sync"></i>
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="row justify-content-center" id="contenedor">
+    @foreach (var item in Model)
+    {
+        <div class="col-md-6 col-sm-12 mb-2 customer-user" id="customer-user-@item.Id">
+            <div class="card shadow">
+                <div class="card-body row">
+                    <div class="col-5 border-right">
+                        <input type="hidden" class="customer-user-id" value="@item.Id" />
+                        <dl class="dl-horizontal">
+                            <dt class="text-muted">
+                                Usuario
+                            </dt>
+                            <dd>
+                                <span>@item.Email</span>
+                            </dd>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <dt class="text-muted">
+                                    Cliente
+                                </dt>
+                                <dd>
+                                    @Html.DisplayFor(modelItem => item.CustomerInfo.Title)
+                                </dd>
+                            }
+                        </dl>
+                    </div>
+                    <div class="col-7">
+                        <div class="permissions"
+                             style="min-height: 110px; max-height: 120px; overflow: auto; padding: 10px;">
+                            @*los permissions del customerUser*@
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a asp-action="Edit" asp-route-customerUserId="@item.Id" class="btn btn-sm btn-outline-info">
+                        Gestionar
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script type="text/javascript">
+
+        $(document).ajaxStart(function (e) {
+            $('#contenedor').addClass('d-none');
+            $('#loading').removeClass('d-none');
+        });
+        $(document).ajaxComplete(function (e) {
+            $('#contenedor').removeClass('d-none');
+            $('#loading').addClass('d-none');
+        });
+
+        $(document).ready(function(){
+            $('.customer-user').each(async function (e) {
+                const customerUserId = $(this).find('.customer-user-id').val();
+                loadPermissionsByCustomerUserId(customerUserId);
+            });
+        });
+
+        loadPermissionsByCustomerUserId = (customerUserId) => {
+            $.ajax({
+                url: "@Url.Action("GetPermissionsByCustomerUserId", "CustomerUserPermissions")",
+                data: {
+                    customerUserId
+                },
+                type: "get"
+            }).done(({ customerUserId, permissions }) => {
+                showPermissionsByCustomerUserId(customerUserId, permissions);
+            }).catch(console.error);
+        }
+
+        showPermissionsByCustomerUserId = (customerUserId, permissions) => {
+            console.log({ customerUserId, permissions });
+            if (permissions.length == 0) {
+                const empty = `
+                    <input type="text" readonly class="form-control form-control-sm" value="Ninguno" />
+                `;
+                $(`#customer-user-${customerUserId} .permissions`).append(empty);
+            } else {
+                permissions.forEach(permission => {
+                    const option = `
+                        <input type="text" readonly class="form-control form-control-sm mb-2" value="${ permission.title }" />
+                    `;
+                    $(`#customer-user-${customerUserId} .permissions`).append(option);
+                });
+            }
+        }
+    </script>
+}
+
+

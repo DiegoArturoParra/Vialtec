@@ -1,0 +1,137 @@
+﻿@model Utilitarios.Device
+
+@{
+    ViewData["Title"] = "Create";
+    Layout = "~/Areas/SuperAdmin/Views/Shared/_LayoutSuperAdmin.cshtml";
+}
+
+<br />
+<div class="row justify-content-center">
+    <div class="col-md-8 col-sm-10 col-xs-12">
+        <a class="btn btn-sm btn-outline-info animate__animated animate__backInUp" asp-action="Index">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <form asp-action="Create" id="form1">
+            <div class="card shadow animate__animated animate__backInDown">
+                <div class="card-header">
+                    <b class="text-muted d-block text-center">Nuevo Dispositivo</b>
+                </div>
+                <div class="card-body row justify-content-center">
+                    <div class="col-md-6 col-sm-12">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <div class="form-group">
+                            <label asp-for="AssetSerial" class="control-label text-muted"></label>
+                            <input asp-for="AssetSerial" class="form-control" />
+                            <span asp-validation-for="AssetSerial" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="ModelId" class="control-label text-muted"></label>
+                            <select asp-for="ModelId" class="form-control" asp-items="ViewBag.ModelId"></select>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="DistributorInfoId" class="control-label text-muted"></label>
+                            <select asp-for="DistributorInfoId" class="form-control" asp-items="ViewBag.DistributorInfoId"></select>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="BluetoothInfo" class="control-label text-muted"></label>
+                            <input asp-for="BluetoothInfo" class="form-control" />
+                            <span asp-validation-for="BluetoothInfo" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-sm-12">
+                        @*<div class="form-group">
+                            <label asp-for="CustomerInfoId" class="control-label text-muted"></label>
+                            <select asp-for="CustomerInfoId" class="form-control" asp-items="ViewBag.CustomerInfoId"></select>
+                        </div>*@
+                        <div class="form-group">
+                            <label asp-for="NetworkIdentifier" class="control-label text-muted"></label>
+                            <input asp-for="NetworkIdentifier" class="form-control" />
+                            <span asp-validation-for="NetworkIdentifier" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="ZoneTime" class="control-label text-muted"></label>
+                            <input asp-for="ZoneTime" class="form-control" />
+                            <span asp-validation-for="ZoneTime" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="DevPass" class="control-label text-muted"></label>
+                            <input asp-for="DevPass" class="form-control" />
+                            <span asp-validation-for="DevPass" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <div class="row justify-content-center">
+                        <div class="col-md-6 col-sm-10">
+                            <input type="submit" value="Agregar" class="btn btn-block btn-outline-info" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script type="text/javascript">
+        $(document).ready(function (e) {
+
+            $('#form1').submit(function (e) {
+                let blueInfo = $('#BluetoothInfo').val();
+                if (blueInfo !== '' && !IsJsonString(blueInfo)) {
+                    e.preventDefault();
+                    Swal.fire({ icon: 'error', text: 'La cadena ingresada para Info Bluetooth no corresponde con un Json válido' });
+                }
+            });
+
+            $('#BluetoothInfo').blur(function (e) {
+                let value = $(this).val();
+                if (value !== '' && !IsJsonString(value)) {
+                    $(this).val('');
+                    Swal.fire({ icon: 'error', text: 'La cadena ingresada para Info Bluetooth no corresponde con un Json válido'});
+                }
+            });
+
+            function IsJsonString(str) {
+                try {
+                    JSON.parse(str);
+                } catch (e) {
+                    return false;
+                }
+                return true;
+            }
+
+            $('#AssetSerial').blur(function (e) {
+                $.ajax({
+                    url: "@Url.Action("AssetSerialExists", "Devices")",
+                    data: {
+                        assetSerial: $(this).val()
+                    },
+                    type: "get"
+                }).done(function (exists) {
+                    if (exists) {
+                        $('#AssetSerial').val('');
+                        Swal.fire({ icon: 'error', text: 'El Serial ya está siendo utilizado por otro dispositivo' });
+                    }
+                }).fail(function (err) { console.log(err); });
+            });
+
+            $('#NetworkIdentifier').blur(function (e) {
+                $.ajax({
+                    url: "@Url.Action("NetworkIdentifierExists", "Devices")",
+                    data: {
+                        networkIdentifier: $(this).val()
+                    },
+                    type: "get"
+                }).done(function (exists) {
+                    if (exists) {
+                        $('#NetworkIdentifier').val('');
+                        Swal.fire({ icon: 'error', text: 'El Identificador de Red ya está siendo utilizado por otro dispositivo' });
+                    }
+                }).fail(function (err) { console.log(err); });
+            });
+        });
+    </script>
+}

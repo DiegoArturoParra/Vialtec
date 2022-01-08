@@ -1,0 +1,32 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+<br />
+<div class="container-fluid text-center mt-5">
+    @if (ViewData["base64img"] != null)
+    {
+        <img id="img-logo" src="data:image/png;base64, @ViewData["base64img"]" />
+    }
+    else
+    {
+        <img src="~/img/image-not-found.png" alt="img logo" />
+    }
+</div>
+
+
+@section Scripts{
+    <script type="text/javascript">
+        $(document).ready(function (e) {
+            let width = $('#img-logo').width();
+            let height = $('#img-logo').height();
+
+            // Ya se considera rectángulo
+            if ((width - height) > 200) {
+                $('#img-logo').addClass('w-75');
+            } else { // Considerado como cuadrado
+                $('#img-logo').addClass('w-50');
+            }
+            $('#img-logo').css('max-height', '400px');
+        });
+    </script>
+}

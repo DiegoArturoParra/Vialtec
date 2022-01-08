@@ -1,0 +1,165 @@
+﻿@model Utilitarios.PrecommandCustomerName
+
+@{
+    ViewData["Title"] = "Create";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<br />
+<div class="row justify-content-center">
+    <div class="col-md-10 col-sm-12 col-xs-12">
+        <a class="btn btn-sm btn-outline-info animate__animated animate__backInUp" asp-action="Index">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <form asp-action="Edit" id="form1">
+            <div class="card shadow animate__animated animate__backInDown">
+                <div class="card-header">
+                    <b class="text-muted d-block text-center">Editar Cliente-Precomando</b>
+                </div>
+                <div class="card-body row">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input asp-for="Id" type="hidden" />
+                    <div class="col-md-6 col-sm-12">
+                        <div class="form-group">
+                            <label for="CategoryId" class="control-label text-muted">Categoría</label>
+                            <select id="CategoryId" class="form-control" asp-items="ViewBag.CategoryId"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="ModelId" class="control-label text-muted">Modelo</label>
+                            <select id="ModelId" class="form-control" asp-items="ViewBag.ModelId"></select>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="PrecommandId" class="control-label text-muted"></label>
+                            <select asp-for="PrecommandId" class="form-control" asp-items="ViewBag.PrecommandId"></select>
+                            <span asp-validation-for="PrecommandId" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-sm-12">
+                        <div class="form-group">
+                            <label asp-for="CustomerInfoId" class="control-label text-muted"></label>
+                            <select asp-for="CustomerInfoId" class="form-control" asp-items="ViewBag.CustomerInfoId"></select>
+                            <span asp-validation-for="CustomerInfoId" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="CustomerTitle" class="control-label text-muted"></label>
+                            <input asp-for="CustomerTitle" class="form-control" />
+                            <span asp-validation-for="CustomerTitle" class="text-danger"></span>
+                        </div>
+                        <div class="form-group text-center">
+                            <br />
+                            <div id="spinner-loading" class="spinner-border text-dark d-none" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <div class="row justify-content-center">
+                        <div class="col-md-4 col-sm-6 col-xs-10">
+                            <input type="button" id="btn-update" value="Actualizar"
+                                   class="btn btn-block btn-outline-info" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script type="text/javascript">
+        $(document).ready(function (e) {
+
+            // Cargar los modelos dependiendo del CategoryId
+            loadModelsByCategoryId = (categoryId) => {
+                $.ajax({
+                    url: "@Url.Action("GetModelsByCategoryId", "PrecommandCustomerNames")",
+                    data: { categoryId },
+                    type: "get"
+                }).then(models => {
+                    $('#ModelId option').remove();
+                    if (models.length === 0) {
+                        let empty = `<option value="-1">No hay modelos</option>`;
+                        $('#ModelId').append(empty);
+                    } else {
+                        models.forEach(item => {
+                            let option = `<option value="${item.id}">${item.title}</option>`;
+                            $('#ModelId').append(option);
+                        });
+                    }
+                    // Cargar los precomamnds
+                    loadPrecommandsByModelId($('#ModelId').val());
+                }).catch(console.error);
+            }
+
+            // Cargar los precommands dependiendo del ModelId
+            loadPrecommandsByModelId = (modelId) => {
+                $.ajax({
+                    url: "@Url.Action("GetPrecommandsByModelId", "PrecommandCustomerNames")",
+                    data: { modelId },
+                    type: "get"
+                }).then(precommands => {
+                    $('#PrecommandId option').remove();
+                    if (precommands.length === 0) {
+                        let empty = `<option value="-1">No hay precomandos</option>`;
+                        $('#PrecommandId').append(empty);
+                    } else {
+                        precommands.forEach(item => {
+                            let option = `<option value="${item.id}">${item.title}</option>`;
+                            $('#PrecommandId').append(option);
+                        });
+                    }
+                }).catch(console.error)
+            }
+
+            // OnChange para los select
+            $('#CategoryId').change(function (e) {
+                loadModelsByCategoryId($(this).val());
+            });
+
+            $('#ModelId').change(function (e) {
+                loadPrecommandsByModelId($(this).val());
+            });
+
+            // Submit del formulario
+            $('#btn-update').click(async function (e) {
+                const precommandId = $('#PrecommandId').val();
+                if (precommandId == "-1") {
+                    Swal.fire("Error", "No has seleccionado un precomando", "error");
+                    return;
+                }
+                const id = $('#Id').val();
+                const customerInfoId = $('#CustomerInfoId').val();
+                const exists = await verifyRelationshipExists(id, precommandId, customerInfoId);
+                if (exists) {
+                    Swal.fire('Error', 'La relación entre cliente y precomando ya existe', 'error');
+                } else {
+                    $('#form1').submit();
+                }
+            });
+
+            // Verificar que la relación entre customerInfo y precommandId NO exista
+            verifyRelationshipExists = (id, precommandId, customerInfoId) => {
+                return $.ajax({
+                    url: "@Url.Action("RelationshipExistsUpdate", "PrecommandCustomerNames")",
+                    data: {
+                        id, precommandId, customerInfoId
+                    },
+                    type: "get"
+                });
+            }
+
+
+            // Ajax start and complete
+            $(document).ajaxStart(function (e) {
+                $('#spinner-loading').removeClass('d-none');
+            });
+
+            $(document).ajaxComplete(function (e) {
+                $('#spinner-loading').addClass('d-none');
+            });
+        });
+    </script>
+}

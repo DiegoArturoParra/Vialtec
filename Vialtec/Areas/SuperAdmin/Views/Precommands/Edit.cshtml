@@ -1,0 +1,152 @@
+﻿@model Utilitarios.Precommand
+@using Newtonsoft.Json
+
+@{
+    ViewData["Title"] = "Edit";
+    Layout = "~/Areas/SuperAdmin/Views/Shared/_LayoutSuperAdmin.cshtml";
+}
+
+<br />
+<div class="row justify-content-center">
+    <div class="col-md-8 col-sm-10 col-xs-12">
+        <a class="btn btn-sm btn-outline-info animate__animated animate__backInUp" asp-action="Index">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <form asp-action="Edit" id="form1">
+            <div class="card shadow animate__animated animate__backInDown">
+                <div class="card-header">
+                    <b class="text-muted d-block text-center">Editar Precomando</b>
+                </div>
+                <div class="card-body row">
+                    <div class="col-6">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <div class="form-group">
+                            <label asp-for="Title" class="control-label text-muted"></label>
+                            <input asp-for="Title" class="form-control" />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="CommandData" class="control-label text-muted"></label>
+                            <input asp-for="CommandData" class="form-control" />
+                            <span asp-validation-for="CommandData" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="ModelId" class="control-label text-muted"></label>
+                            <select asp-for="ModelId" class="form-control" asp-items="ViewBag.ModelId"></select>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <input asp-for="ExpectedAck" type="hidden" class="form-control" />
+                        <div class="form-group">
+                            <label asp-for="ExpectedAck" class="control-label text-muted"></label>
+                            <div class="input-group mb-3">
+                                <input type="text" id="new-ack" class="form-control" placeholder="Respuesta">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-info" type="button" id="btn-add-ack">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <b class="text-muted d-block mb-2">Respuestas agregadas</b>
+                            <div id="acks" style="max-height: 150px; overflow: auto;">
+                                @*Respuestas agregadas*@
+                                @foreach (var ack in JsonConvert.DeserializeObject<ExpectedAck>(Model.ExpectedAck).acks)
+                                {
+                                    <div class="btn-group btn-group-sm mb-2" role="group">
+                                        <button type="button" class="btn btn-light"> @ack </button>
+                                        <button type="button" class="btn btn-danger btn-delete-ack" id="@ack"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <div class="row justify-content-center">
+                        <div class="col-md-4 col-sm-6 col-xs-10">
+                            <input type="submit" value="Agregar" class="btn btn-block btn-outline-info" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script type="text/javascript">
+        $(document).ready(function (e) {
+
+            // Submit del formulario
+            $('#form1').submit(function (e) {
+                const expected_acks = $('#ExpectedAck').val();
+                if (expected_acks == '') {
+                    e.preventDefault();
+                    Swal.fire('Error', 'No se ha ingresado la respuesta esperada', 'error');
+                }
+            });
+
+            // Manejo de Respuestas
+            var acks = [];
+
+            // Agregar al array los acks que ya existen en el modelo
+            $('#acks .btn-group .btn-delete-ack').each(function (e) {
+                const ack = $(this).attr('id');
+                acks.push(ack);
+            });
+
+            // Agregar nuevo ack
+            $('#btn-add-ack').click(function () {
+                const ack = $('#new-ack').val();
+                if (ack != '') {
+                    if (acks.includes(ack)) {
+                        alert('La respuesta ya existe');
+                    } else {
+                        acks.push(ack);
+                        refreshAcks();
+                        $('#new-ack').val('');
+                    }
+                }
+            });
+
+            // Eliminar ack
+            $('#acks').on('click', '.btn-delete-ack', function (e) {
+                const ack = $(this).attr('id');
+                acks = acks.filter(x => x !== ack);
+                refreshAcks();
+            });
+
+            refreshAcks = () => {
+                // Limpiar acks
+                $('#acks .btn-group').remove();
+
+                if (acks.length == 0) {
+                    const emptyMsg = `
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-light">Ninguna</button>
+                            </div>
+                        `;
+                    $('#acks').append(emptyMsg);
+                } else {
+                    acks.forEach(ack => {
+                        const ackOption = `
+                                <div class="btn-group btn-group-sm mb-2" role="group">
+                                    <button type="button" class="btn btn-light">${ ack}</button>
+                                    <button type="button" class="btn btn-danger btn-delete-ack" id="${ ack}"><i class="fas fa-trash"></i></button>
+                                </div>
+                            `;
+                        $('#acks').append(ackOption);
+                    });
+                }
+                $('#ExpectedAck').val(acks.join('#'));
+            }
+
+            // Llamada Inicial
+            refreshAcks();
+        });
+    </script>
+}

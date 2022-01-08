@@ -1,0 +1,193 @@
+﻿@model Utilitarios.Equipment
+
+@{
+    ViewData["Title"] = "Create";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var categories = ViewData["categories"] as List<Utilitarios.Category>;
+}
+
+<br />
+<div class="row justify-content-center">
+    <div class="col-md-8 col-sm-10">
+        <a class="btn btn-sm btn-outline-info animate__animated animate__backInUp" asp-action="Index">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <form asp-action="Create" id="form1">
+            <div class="card shadow animate__animated animate__backInDown">
+                <div class="card-header">
+                    <b class="text-muted d-block text-center">Nuevo Dispositivo</b>
+                </div>
+                <div class="card-body">
+                    <div class="row justify-content-center">
+                        <div class="col-md-6 col-sm-10">
+                            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                            <div class="form-group">
+                                <label class="text-muted">Categoría</label>
+                                @{
+                                    int inicialID = categories.Count() != 0 ? categories[0].Id : -1;
+                                }
+                                <select name="categoryId" id="categoryId" class="form-control">
+                                    @if (inicialID == -1)
+                                    {
+                                        <option value="-1"></option>
+                                    }
+                                    @foreach (var item in categories)
+                                    {
+                                        <option value="@item.Id">@item.Title</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="text-muted">Modelo</label>
+                                <select name="modelId" id="modelId" class="form-control">
+                                    @*items dynamic*@
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="text-muted">Dispositivo</label>
+                                <select name="deviceId" id="deviceId" class="form-control">
+                                    @*items dynamic*@
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="EquipmentGroupId" class="control-label text-muted"></label>
+                                <select asp-for="EquipmentGroupId" class="form-control" asp-items="ViewBag.EquipmentGroupId"></select>
+                                <span asp-validation-for="EquipmentGroupId" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-sm-10">
+                            <div class="form-group">
+                                <label asp-for="EquipmentAlias" class="control-label text-muted"></label>
+                                <input asp-for="EquipmentAlias" class="form-control" />
+                                <span asp-validation-for="EquipmentAlias" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="NotifyInfo" class="control-label text-muted"></label>
+                                <input asp-for="NotifyInfo" class="form-control" />
+                                <span asp-validation-for="NotifyInfo" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Description" class="control-label text-muted"></label>
+                                <textarea rows="4" asp-for="Description" class="form-control"></textarea>
+                                <span asp-validation-for="Description" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <div class="row justify-content-center">
+                        <div class="col-md-6 col-sm-10">
+                            <input type="submit" value="Agregar" class="btn btn-block btn-outline-info" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+<script type="text/javascript">
+    $(document).ready(function (e) {
+
+            $(document).ajaxStart(function (e) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Espere por favor',
+                    text: 'Cargando información',
+                    allowOutsideClick: false
+                });
+                Swal.showLoading();
+            });
+
+            $(document).ajaxComplete(function (e) {
+                Swal.close();
+            });
+
+            // ready change models
+            loadModels($('#categoryId').val());
+
+            $('#categoryId').change(function (e) {
+                var categoryId = $(this).val();
+                loadModels(categoryId);
+            });
+
+            $('#modelId').change(function (e) {
+                var modelId = $(this).val();
+                loadDevices(modelId);
+            });
+
+            // verificar submit form
+            $('#form1').submit(function (e) {
+                // verificar categoria, model y device
+                if ($('#categoryId').val() == "-1" || $('#modelId').val() == "-1" || $('#deviceId').val() == "-1") {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Debes completar todos los campos'
+                    });
+                }
+            });
+
+            function loadModels(categoryId) {
+                $.ajax({
+                    url: "@Url.Action("GetModelsByCategoryId", "Equipments")",
+                    data: {
+                        categoryId
+                    },
+                    type: "get"
+                })
+                .done(function (models) {
+                    // borrar anteriores option
+                    $('#modelId option').remove();
+                    models.forEach(x => {
+                        let option = `<option value="${x.id}">${x.title}</option>`;
+                        $('#modelId').append(option);
+                    });
+                    if (models.length === 0) {
+                        let option = `<option value="-1"></option>`;
+                        $('#modelId').append(option);
+                        // este modelId no existe entonces no traera nada en los devices
+                        loadDevices(-1);
+                    } else {
+                        // cargar nuevos devices por el primer model id obtenido
+                        loadDevices(models[0].id);
+                    }
+                })
+                .fail(function (xhr, status, error) {
+                    console.log(error);
+                });
+            }
+
+            function loadDevices(modelId) {
+                $.ajax({
+                    url: "@Url.Action("GetDevicesByModelId", "Equipments")",
+                    data: {
+                        modelId
+                    },
+                    type: "get"
+                })
+                .done(function (devices) {
+                    console.log(devices);
+                    // borrar anteriores option
+                    $('#deviceId option').remove();
+                    if (devices.length === 0) {
+                        let option = `<option value="-1">No hay dispositivos para el modelo</option>`;
+                        $('#deviceId').append(option);
+                    } else {
+                        devices.forEach(x => {
+                            let option = `<option value="${x.id}">${x.assetSerial}</option>`;
+                            $('#deviceId').append(option);
+                        });
+                    }
+                })
+                .fail(function (xhr, status, error) {
+                    console.log(error);
+                });
+            }
+        });
+</script>
+}

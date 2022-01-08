@@ -1,0 +1,370 @@
+﻿
+@{
+    Layout = null;
+    var projects = ViewData["projects"] as List<Utilitarios.Project>;
+    var geometries = ViewData["geometries"] as List<Utilitarios.Geometry>;
+    var lineColors = ViewData["lineColors"] as List<Utilitarios.LineColor>;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vialab</title>
+    <link rel="Shortcut Icon" href="~/vialab.ico" type="image/x-icon" />
+
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="~/plugins/fontawesome-free/css/all.min.css">
+    <!-- Ionicons -->
+    <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <!-- Theme style -->
+    <link rel="stylesheet" href="~/css/adminlte.min.css">
+    <!-- Google Font: Source Sans Pro -->
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
+    @*SweetAlert*@
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+    @*Animate Css*@
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css" />
+    @*Reflectivy css*@
+    <link rel="stylesheet" href="~/css/reflectivity.css" />
+    @*FabButton css*@
+    <link rel="stylesheet" href="~/css/fab.css" />
+
+    @*Leaftel*@
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin="" />
+    <!-- Make sure you put this AFTER Leaflet's CSS -->
+    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==" crossorigin=""></script>
+
+    @*Cluster markers efects*@
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.3.0/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.3.0/dist/MarkerCluster.Default.css" />
+    <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js" integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw==" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.3.0/dist/leaflet.markercluster.js"></script>
+
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark pl-5">
+        <div class="container">
+            <a asp-controller="Home" asp-action="Index" class="btn btn-sm btn-info mr-4">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+
+            <a class="navbar-brand" href="#" style="font-size: 15px;">
+                <i class="fas fa-fire"></i>&nbsp;
+                <span>Reporte de retro-reflectividad</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mr-auto">
+                </ul>
+                <!-- Button trigger modal -->
+                <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#exampleModal">
+                    Filtros
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    @*Fab Button para las descargas de archivos*@
+    <div class="fab-container d-none" id="fab-container">
+        <div class="fab-main fab-icon-holder">
+            <i class="fas fa-download"></i>
+            <span class="badge badge-dark" id="fab-counter"></span>
+        </div>
+        <ul class="fab-options" id="fab-options">
+            <li>
+                <span class="fab-label" style="background: #00695c;">Exportar</span>
+            </li>
+            <li>
+                <span class="fab-label">PDF</span>
+                <div class="fab-icon-holder" id="btn-pdf" target="_blank">
+                    <i class="fas fa-file-pdf"></i>
+                </div>
+            </li>
+            <li>
+                <span class="fab-label">KML</span>
+                <div class="fab-icon-holder" id="btn-kml">
+                    <i class="fas fa-globe-africa"></i>
+                </div>
+            </li>
+            <li>
+                <span class="fab-label">Excel</span>
+                <div class="fab-icon-holder" id="btn-xls">
+                    <i class="fas fa-file-excel"></i>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <form asp-action="ExportKml" method="post" id="form-export-kml">
+        <input type="hidden" name="activities_kml" id="activities_kml" /> <input type="hidden" name="geometryId_kml" id="geometryId_kml" />
+        <input type="hidden" name="lineColorId_kml" id="lineColorId_kml" /> <input type="hidden" name="lineNumber_kml" id="lineNumber_kml" />
+        <input type="hidden" name="dateInit_kml" id="dateInit_kml" /> <input type="hidden" name="dateFinal_kml" id="dateFinal_kml" />
+        <input type="hidden" name="pr_init_kml" id="pr_init_kml" /> <input type="hidden" name="pr_final_kml" id="pr_final_kml" />
+    </form>
+
+    <form asp-action="ExportExcel" method="post" id="form-export-xls">
+        <input type="hidden" name="activities_xls" id="activities_xls" /> <input type="hidden" name="geometryId_xls" id="geometryId_xls" />
+        <input type="hidden" name="lineColorId_xls" id="lineColorId_xls" /> <input type="hidden" name="lineNumber_xls" id="lineNumber_xls" />
+        <input type="hidden" name="dateInit_xls" id="dateInit_xls" /> <input type="hidden" name="dateFinal_xls" id="dateFinal_xls" />
+        <input type="hidden" name="pr_init_xls" id="pr_init_xls" /> <input type="hidden" name="pr_final_xls" id="pr_final_xls" />
+        <input type="hidden" name="include_image_xls" id="include_image_xls"/>
+    </form>
+
+    <form asp-action="ReportPdf" method="post" id="form-report-pdf">
+        <input type="hidden" name="activities_pdf" id="activities_pdf" /> <input type="hidden" name="geometryId_pdf" id="geometryId_pdf" />
+        <input type="hidden" name="lineColorId_pdf" id="lineColorId_pdf" /> <input type="hidden" name="lineNumber_pdf" id="lineNumber_pdf" />
+        <input type="hidden" name="dateInit_pdf" id="dateInit_pdf" /> <input type="hidden" name="dateFinal_pdf" id="dateFinal_pdf" />
+        <input type="hidden" name="pr_init_pdf" id="pr_init_pdf" /> <input type="hidden" name="pr_final_pdf" id="pr_final_pdf" />
+        <input type="hidden" name="lineNumbers_pdf" id="lineNumbers_pdf" />
+    </form>
+
+    @*Map Leaftel*@
+    <div id="map">
+    </div>
+
+    <!-- Modal Filtros -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header py-2 pl-4">
+                    <b class="text-muted">Reporte de retro-reflectividad</b>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row justify-content-center">
+                        <div class="col-md-3 col-sm-6">
+                            <div class="form-group">
+                                <b class="text-muted">Proyectos</b>
+                                <select class="form-control" id="projectId">
+                                    @foreach (var project in projects)
+                                    {
+                                        <option value="@project.Id">@project.Title</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-6">
+                            <b class="text-muted">Actividades</b>
+                            <div class="container-overflow">
+                                <table class="table table-sm table-bordered w-100">
+                                    <tbody id="table-activities">
+                                        @*actividades*@
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-md-5 col-sm-6">
+                            <b class="text-muted">Seleccionadas</b>
+                            <div class="container-overflow">
+                                <table class="table table-sm table-bordered w-100">
+                                    <tbody id="table-seleccion">
+                                        @*actividades seleccionadas*@
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="container">
+                        <nav>
+                            <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                                <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab" href="#nav-horizontal" role="tab" aria-controls="nav-home" aria-selected="true">Horizontal</a>
+                                <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#nav-vertical" role="tab" aria-controls="nav-profile" aria-selected="false">Vertical</a>
+                            </div>
+                        </nav>
+                        <div class="tab-content" id="nav-tabContent">
+                            <div class="tab-pane fade show active p-2" id="nav-horizontal" role="tabpanel" aria-labelledby="nav-home-tab">
+                                <div class="row justify-content-center">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <b class="text-muted">Geometría</b>
+                                            <div class="input-group input-group-sm mb-3">
+                                                <select class="form-control form-control-sm" id="geometryId" name="geometryId">
+                                                    @foreach (var geo in geometries)
+                                                    {
+                                                        <option value="@geo.Id">@geo.Title</option>
+                                                    }
+                                                </select>
+                                                <div class="input-group-prepend">
+                                                    <div class="input-group-text">
+                                                        <input type="checkbox" aria-label="Checkbox" style="cursor:pointer;">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <b class="text-muted">Color</b>
+                                            <div class="input-group input-group-sm mb-3">
+                                                <select class="form-control form-control-sm" id="lineColorId" name="lineColorId">
+                                                    @foreach (var line in lineColors)
+                                                    {
+                                                        <option value="@line.Id">@line.Title</option>
+                                                    }
+                                                </select>
+                                                <div class="input-group-prepend">
+                                                    <div class="input-group-text">
+                                                        <input type="checkbox" aria-label="Checkbox" style="cursor:pointer;">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <b class="text-muted">Línea</b>
+                                            <div class="input-group input-group-sm mb-3">
+                                                <select class="form-control form-control-sm" id="lineNumber" name="lineNumber">
+                                                    @for (int i = 1; i <= 20; i++)
+                                                    {
+                                                        <option value="@i">@i</option>
+                                                    }
+                                                </select>
+                                                <div class="input-group-prepend">
+                                                    <div class="input-group-text">
+                                                        <input type="checkbox" aria-label="Checkbox" style="cursor:pointer;">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <b class="text-muted d-block float-left">Fecha Inicial</b>
+                                            <b class="text-muted d-block float-right mr-4">Fecha Final</b>
+                                            <div class="input-group input-group-sm mb-3">
+                                                <input class="form-control form-control-sm" type="date" id="dateInit" />
+                                                <input class="form-control form-control-sm" type="date" id="dateFinal" />
+                                                <div class="input-group-prepend">
+                                                    <div class="input-group-text">
+                                                        <input type="checkbox" aria-label="Checkbox" style="cursor:pointer;">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <b class="text-muted d-block float-left">Mínimo</b>
+                                            <b class="text-muted d-block float-right mr-4">Tolerancia</b>
+                                            <div class="input-group input-group-sm mb-3">
+                                                <input class="form-control form-control-sm" type="number" value="0" id="minimo" />
+                                                <input class="form-control form-control-sm" type="number" value="0" id="tolerancia" />
+                                                <div class="input-group-prepend">
+                                                    <div class="input-group-text">
+                                                        <input type="checkbox" aria-label="Checkbox" style="cursor:pointer;">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <b class="text-muted d-block float-left">PR Inicial</b>
+                                            <b class="text-muted d-block float-right mr-4">PR Final</b>
+                                            <div class="input-group input-group-sm mb-3">
+                                                <input class="form-control form-control-sm" type="number" value="0" id="pr_init1" />
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text" id="basic-addon1">+</span>
+                                                </div>
+                                                <input class="form-control form-control-sm" type="number" value="0" id="pr_final1" />
+                                                &nbsp;
+                                                <input class="form-control form-control-sm" type="number" value="0" id="pr_init2" />
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text" id="basic-addon1">+</span>
+                                                </div>
+                                                <input class="form-control form-control-sm" type="number" value="0" id="pr_final2" />
+                                                <div class="input-group-prepend">
+                                                    <div class="input-group-text">
+                                                        <input type="checkbox" aria-label="Checkbox" style="cursor:pointer;">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-10 p-0">
+                                        <div class="float-left">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" style="cursor: pointer;" id="mostrarValoresCheck" checked>
+                                                <b class="text-muted"><label class="form-check-label" style="cursor: pointer;" for="mostrarValoresCheck">Mostrar valores</label></b>
+                                            </div>
+                                        </div>
+                                        <div class="float-right">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" style="cursor: pointer;" id="agruparCheck" checked>
+                                                <b class="text-muted"><label class="form-check-label" style="cursor: pointer;" for="agruparCheck">Agrupar</label></b>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="nav-vertical" role="tabpanel" aria-labelledby="nav-profile-tab">
+                                <div class="row justify-content-center">
+                                    <div class="col-12">
+                                        Próximo Lanzamiento
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer p-2">
+                    <div class="row w-100 justify-content-center">
+                        <div class="col-md-4 col-sm-6">
+                            <button class="btn btn-sm btn-block btn-primary" id="btn-filtrar">Filtrar</button>
+                            @*<button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Close</button>*@
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Reporte PDF -->
+    <div class="modal fade" id="modalReportPDF" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header py-2 pl-4">
+                    <b class="text-muted text-center d-block">Selecciona las líneas para el reporte PDF</b>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row justify-content-center" id="report-checkbox">
+                        <div class="col-md-3 col-sm-6" id="column-1"></div>
+                        <div class="col-md-3 col-sm-6" id="column-2"></div>
+                        <div class="col-md-3 col-sm-6" id="column-3"></div>
+                        <div class="col-md-3 col-sm-6" id="column-4"></div>
+                    </div>
+                </div>
+                <div class="modal-footer p-2">
+                    <div class="row w-100 justify-content-center">
+                        <div class="col-md-4 col-sm-6">
+                            <button class="btn btn-sm btn-block btn-primary" id="btn-report-pdf">Aplicar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template AdminLTE Scripts -->
+    <!-- jQuery -->
+    <script src="~/plugins/jquery/jquery.min.js"></script>
+    <!-- jQuery UI 1.11.4 -->
+    <script src="~/plugins/jquery-ui/jquery-ui.min.js"></script>
+    <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
+    <script>
+        $.widget.bridge('uibutton', $.ui.button)
+    </script>
+    <!-- Bootstrap 4 -->
+    <script src="~/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+    @*jsPdf*@
+    <script src="https://unpkg.com/jspdf@1.5.3/dist/jspdf.min.js" type="text/javascript"></script>
+    @*Reflectivity js (inclide Map Functions)*@
+    <script src="~/js/reflectivity.js" type="text/javascript"></script>
+
+</body>
+</html>

@@ -1,0 +1,223 @@
+﻿@model PaginatedList<Utilitarios.SpeedStatReport>
+
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    int totalPages = (int)ViewData["totalPages"];
+    var equipments = ViewData["equipments"] as List<Utilitarios.Equipment>;
+    var vehicleTypes = ViewData["vehicleTypes"] as List<Utilitarios.VehicleType>;
+}
+
+<br />
+<h5 class="text-muted d-block text-center" style="font-family: 'Century Gothic';">RADAR CON ESTADÍSTICA</h5>
+<hr />
+<div class="row justify-content-center mb-3">
+    <div class="col-12 table-responsive">
+        <form asp-action="Index" method="get" id="form-filter">
+            <div class="row justify-content-center my-3">
+                <div class="col-lg-2 col-sm-12 mb-1">
+                    <div class="float-right">
+                        <br />
+                        <a class="btn btn-sm btn-outline-warning" asp-action="Index" data-toggle="tooltip" title="Deshacer filtros">
+                            <i class="fas fa-sync"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-10 col-sm-12 mb-1">
+                    <div class="row">
+                        <div class="col-3 mb-2">
+                            <b class="text-muted">Dispositivo</b>
+                            <select id="equipmentId" name="equipmentId" class="form-control form-control-sm" onchange="document.getElementById('form-filter').submit();">
+                                <option value="">-Selecciona-</option>
+                                @foreach (var c in equipments)
+                                {
+                                    @if (c.Id == Convert.ToInt32(@ViewData["equipmentId"]))
+                                    {
+                                        <option value="@c.Id" selected>@c.EquipmentAlias</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@c.Id">@c.EquipmentAlias</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-3 mb-2">
+                            <b class="text-muted">Fecha inicial</b>
+                            <input type="date" id="dateInit" name="dateInit" class="form-control form-control-sm" value="@ViewData["dateInit"]" />
+                        </div>
+                        <div class="col-3 mb-2">
+                            <b class="text-muted">Fecha final</b>
+                            <input type="date" id="dateFinal" name="dateFinal" class="form-control form-control-sm" value="@ViewData["dateFinal"]" />
+                        </div>
+                        <div class="col-3 mb-2">
+                            <br />
+                            <input type="button" id="btn-filter" value="Filtrar" class="btn btn-block btn-sm btn-outline-info" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <nav>
+            <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab" href="#nav-home" role="tab" aria-controls="nav-home" aria-selected="true">Tabla</a>
+                @if (Model.Count() > 0)
+                {
+                    <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#nav-profile" role="tab" aria-controls="nav-profile" aria-selected="false">Gráficas</a>
+                }
+            </div>
+        </nav>
+        <div class="tab-content" id="nav-tabContent">
+            <!-- Tab 1 -->
+            <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+
+                @if (Model.Count > 0)
+                {
+                    <div class="float-right my-1">
+                        <form asp-action="ExportExcel" method="post" id="form-export-excel">
+                            <input type="hidden" id="equipmentId_xls" name="equipmentId_xls" />
+                            <input type="hidden" id="dateInit_xls" name="dateInit_xls" />
+                            <input type="hidden" id="dateFinal_xls" name="dateFinal_xls" />
+                            <button type="button" class="btn btn-sm btn-info" onclick="exportToExcel()">
+                                Exportar <i class="fa fa-file-excel"></i>
+                            </button>
+                        </form>
+                    </div>
+                }
+
+                <table class="table table-sm table-bordered mt-2">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>@Html.DisplayNameFor(model => model[0].DeviceDt)</th>
+                            <th>@Html.DisplayNameFor(model => model[0].ServerDt)</th>
+                            <th>@Html.DisplayNameFor(model => model[0].Equipment)</th>
+                            <th>@Html.DisplayNameFor(model => model[0].VehicleType)</th>
+                            <th>@Html.DisplayNameFor(model => model[0].PeakSpeed)</th>
+                            <th>@Html.DisplayNameFor(model => model[0].LastSpeed)</th>
+                            <th>@Html.DisplayNameFor(model => model[0].AverageSpeed)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Count() == 0)
+                        {
+                            <tr class="text-center">
+                                <td colspan="7">No se encontraron resultados</td>
+                            </tr>
+                        }
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="pl-2"> @Html.DisplayFor(modelItem => item.DeviceDt) </td>
+                                <td class="pl-2"> @Html.DisplayFor(modelItem => item.ServerDt) </td>
+                                <td class="pl-2"> @Html.DisplayFor(modelItem => item.Equipment.EquipmentAlias) </td>
+                                <td class="pl-2"> @Html.DisplayFor(modelItem => item.VehicleType.Title) </td>
+                                <td class="pl-2"> @Html.DisplayFor(modelItem => item.PeakSpeed) Km/h </td>
+                                <td class="pl-2"> @Html.DisplayFor(modelItem => item.LastSpeed) Km/h </td>
+                                <td class="pl-2"> @Html.DisplayFor(modelItem => item.AverageSpeed) Km/h </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <div class="text-center">
+                    @{
+                        var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
+                        var nextDisabled = !Model.HasNextPage ? "disabled" : "";
+                    }
+                    @if (totalPages > 1)
+                    {
+                        <a asp-action="Index"
+                           asp-route-pageNumber="@(Model.PageIndex - 1)"
+                           asp-route-equipmentId="@ViewData["equipmentId"]"
+                           asp-route-dateInit="@ViewData["dateInit"]"
+                           asp-route-dateFinal="@ViewData["dateFinal"]"
+                           class="btn btn-sm btn-outline-info @prevDisabled">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            string badgeClass = i == Model.PageIndex ? "badge-info" : "badge-light text-muted";
+                            <a asp-action="Index"
+                               asp-route-equipmentId="@ViewData["equipmentId"]"
+                               asp-route-dateInit="@ViewData["dateInit"]"
+                               asp-route-dateFinal="@ViewData["dateFinal"]"
+                               asp-route-pageNumber="@i">
+                                <span class="number-page badge @badgeClass" style="transition: 0.5s;">@i</span>
+                            </a>
+                        }
+                        <a asp-action="Index"
+                           asp-route-equipmentId="@ViewData["equipmentId"]"
+                           asp-route-dateInit="@ViewData["dateInit"]"
+                           asp-route-dateFinal="@ViewData["dateFinal"]"
+                           asp-route-pageNumber="@(Model.PageIndex + 1)"
+                           class="btn btn-sm btn-outline-info @nextDisabled">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    }
+                </div>
+
+            </div>
+            <!-- Tab 2 -->
+            <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
+
+                <div class="row justify-content-center my-4">
+                    <div class="col-10 mb-3 text-center">
+                        <b class="text-muted text-center d-block">REPORTES POR HORARIO</b>
+                        <div id="loading-chart" class="spinner-grow d-none" style="width: 5rem; height: 5rem;" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                    </div>
+
+                    <div class="col-10">
+                        <div class="card shadow">
+                            <div class="card-body">
+                                <b class="text-muted mb-3">PROMEDIO DE PICO DE VELOCIDAD</b>
+                                <br /><br />
+                                <canvas id="canvas-average-peak-speeds-hours" style="width: 100%; max-height: 350px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-10">
+                        <div class="card shadow">
+                            <div class="card-body">
+                                <b class="text-muted mb-3">PROMEDIO DE ÚLTIMA VELOCIDAD</b>
+                                <br /><br />
+                                <canvas id="canvas-average-last-speeds-hours" style="width: 100%; max-height: 350px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-10">
+                        <div class="card shadow">
+                            <div class="card-body">
+                                <b class="text-muted mb-3">PROMEDIO DE VELOCIDAD</b>
+                                <br /><br />
+                                <canvas id="canvas-average-avg-speeds-hours" style="width: 100%; max-height: 350px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/Chartjs/Chart.min.js"></script>
+    <script src="~/js/speed_stat_report.js"></script>
+    <script src="~/js/navigation.js"></script>
+
+    <script>
+        const exportToExcel = () => {
+            $('#equipmentId_xls').val($('#equipmentId').val());
+            $('#dateInit_xls').val($('#dateInit').val());
+            $('#dateFinal_xls').val($('#dateFinal').val());
+            $('#form-export-excel').submit();
+        }
+    </script>
+}
+

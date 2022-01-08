@@ -1,0 +1,96 @@
+﻿@model Utilitarios.CustomerEventNotification
+
+@{
+    ViewData["Title"] = "Delete";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<br />
+<div class="row justify-content-center">
+    <div class="col-md-6 col-sm-8 col-xs-12">
+        <a class="btn btn-sm btn-outline-info animate__animated animate__backInUp" asp-action="Index">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div class="card shadow animate__animated animate__backInDown">
+            <div class="card-header">
+                <b class="text-muted d-block text-center">¿Estás seguro de eliminar este evento de notificación?</b>
+            </div>
+            <div class="card-body">
+                <dl class="dl-horizontal">
+                    <dt class="text-muted">
+                        @Html.DisplayNameFor(model => model.CustomerModelEvent)
+                    </dt>
+                    <dd>
+                        @Html.DisplayFor(model => model.CustomerModelEvent.Title)
+                    </dd>
+                    <dt class="text-muted">
+                        @Html.DisplayNameFor(model => model.EmailNotificationProfile)
+                    </dt>
+                    <dd>
+                        @if (Model.EmailNotificationProfileId == null)
+                        {
+                            <span class="badge badge-light">Ninguno</span>
+                        }
+                        else
+                        {
+                            @Html.DisplayFor(model => model.EmailNotificationProfile.Title)
+                        }
+                    </dd>
+                    <dt class="text-muted">
+                        @Html.DisplayNameFor(model => model.TelegramNotificationProfile)
+                    </dt>
+                    <dd>
+                        @if (Model.TelegramNotificationProfileId == null)
+                        {
+                            <span class="badge badge-light">Ninguno</span>
+                        }
+                        else
+                        {
+                            @Html.DisplayFor(model => model.TelegramNotificationProfile.Title)
+                        }
+                    </dd>
+                    <dt class="text-muted">
+                        @Html.DisplayNameFor(model => model.BodyText)
+                    </dt>
+                    <dd>
+                        @Html.DisplayFor(model => model.BodyText)
+                    </dd>
+                </dl>
+            </div>
+            <div class="card-footer">
+                <div class="row justify-content-center">
+                    <div class="col-md-6 col-sm-8">
+                        <form asp-action="Delete" id="formDelete">
+                            <input type="hidden" asp-for="Id" />
+                        </form>
+                        <input type="button" value="Eliminar" id="btn-eliminar" class="btn btn-block btn-outline-danger" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script type="text/javascript">
+        $(document).ready(function (e) {
+
+            $('#btn-eliminar').click(function (e) {
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "No podrás revertir los cambios",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.value) {
+                        $('#formDelete').submit();
+                    }
+                })
+            });
+        });
+    </script>
+}

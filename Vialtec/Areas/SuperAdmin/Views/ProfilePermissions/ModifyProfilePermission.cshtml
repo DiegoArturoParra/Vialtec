@@ -1,0 +1,236 @@
+﻿@model Utilitarios.SecurityProfileDist;
+
+@{
+    ViewData["Title"] = "ModifyProfilePermission";
+    Layout = "~/Areas/SuperAdmin/Views/Shared/_LayoutSuperAdmin.cshtml";
+    var singlePermissionsNotAssigned = ViewData["singlePermissionsNotAssigned"] as List<Utilitarios.SinglePermissionDist>;
+}
+
+<br />
+<div class="row justify-content-center">
+    <div class="col-md-8 col-sm-10 col-xs-12">
+        <a class="btn btn-sm btn-outline-info animate__animated animate__backInUp" asp-controller="SecurityProfileDists" asp-action="Index">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div class="card shadow animate__animated animate__backInDown">
+            <div class="card-header">
+                <b class="text-muted d-block text-center">Modificar Permisos al Perfil de Seguridad</b>
+            </div>
+            <div class="card-body">
+                <input type="hidden" asp-for="Id" />
+                <div class="row">
+                    <div class="col-6">
+                        <input type="hidden" asp-for="Title" />
+                        <dl class="dl-horizontal">
+                            <dt class="text-muted">
+                                @Html.DisplayNameFor(model => model.Title)
+                            </dt>
+                            <dd>
+                                @Html.DisplayFor(model => model.Title)
+                            </dd>
+                        </dl>
+                    </div>
+                    <div class="col-6">
+                        <input type="hidden" asp-for="DistributorInfoId" />
+                        <dl class="dl-horizontal">
+                            <dt class="text-muted">
+                                @Html.DisplayNameFor(model => model.DistributorInfo)
+                            </dt>
+                            <dd>
+                                @Html.DisplayFor(model => model.DistributorInfo.Title)
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+                <div class="row" style="min-height: 200px;">
+                    <div class="col-md-6 col-sm-12">
+                        <b class="text-muted">Permisos asignados</b>
+                        <table class="table table-sm mt-2" id="table-assigneds">
+                            @if (Model.ProfilePermissionsDists.Count == 0)
+                            {
+                                <tr class="tr-empty">
+                                    <td colspan="2">No hay ningún permiso asignado</td>
+                                </tr>
+                            }
+                            @foreach (var pp in Model.ProfilePermissionsDists)
+                            {
+                                <tr>
+                                    <td>@pp.SinglePermissionDist.Title</td>
+                                    <td>
+                                        <input type="hidden" class="id-assigned-permission" value="@pp.SinglePermissionDistId" />
+                                        <button class="btn btn-sm btn-outline-danger delete-assigned">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </table>
+                    </div>
+                    <div class="col-md-6 col-sm-12">
+                        <b class="text-muted">Permisos NO asignados</b>
+                        <table class="table table-sm mt-2" id="table-not-assigneds">
+                            @if (singlePermissionsNotAssigned.Count == 0)
+                            {
+                                <tr class="tr-empty">
+                                    <td colspan="2">Todos los permisos han sido asignados</td>
+                                </tr>
+                            }
+                            @foreach (var permiso in singlePermissionsNotAssigned)
+                            {
+                                <tr>
+                                    <td>@permiso.Title</td>
+                                    <td>
+                                        <input type="hidden" class="id-not-assigned-permission" value="@permiso.Id" />
+                                        <button class="btn btn-sm btn-outline-success add-assigned">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer d-none">
+                <button type="submit" id="btn-submit" class="btn btn-outline-info">Guardar cambios</button>
+                <div class="float-right">
+                    <i class="fas fa-spin fa-spinner text-muted d-none"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script type="text/javascript">
+        $(document).ready(function (e) {
+
+            $('#btn-submit').click(function (e) {
+                $.ajax({
+                    url: "@Url.Action("ModifyProfilePermission", "ProfilePermissions")",
+                    data: {
+                        securityProfileDistId: $('#Id').val(),
+                        singlePermissionDistIdsStr: getSinglePermissionsIds()
+                    },
+                    type: "post"
+                }).done(function (response) {
+                    if (response == true) {
+                        window.location.href = "@Url.Action("Index", "SecurityProfileDists")";
+                    }
+                });
+            });
+
+            function getSinglePermissionsIds() {
+                var singlePermissionsIds = '';
+                $('#table-assigneds tr').each(function (e) {
+                    var id = $(this).find('.id-assigned-permission').val();
+                    singlePermissionsIds += id + ',';
+                });
+                return singlePermissionsIds;
+            }
+
+            $('#table-not-assigneds').on('click', '.add-assigned', function (e) {
+                $('.card-footer').removeClass('d-none');
+                var id = $(this).closest('tr').find('.id-not-assigned-permission').val();
+                getSinglePermission(id, 'assign');
+                $(this).closest('tr').remove();
+            });
+
+            $('#table-assigneds').on('click', '.delete-assigned', function (e) {
+                $('.card-footer').removeClass('d-none');
+                var id = $(this).closest('tr').find('.id-assigned-permission').val();
+                getSinglePermission(id, 'not-assign');
+                $(this).closest('tr').remove();
+            });
+
+            function getSinglePermission(id, action) {
+                $.ajax({
+                    url: "@Url.Action("GetSinglePermissionById", "ProfilePermissions")",
+                    data: {
+                        id
+                    },
+                    type: "get"
+                }).done(function (permission) {
+                    if (action == 'assign') {
+                        assing(permission);
+                    } else if (action == 'not-assign') {
+                        notAssign(permission);
+                    }
+                });
+            }
+
+            function assing(permission) {
+                if ($('#table-not-assigneds tr').length == 0) {
+                    let emptyMsg = `
+                        <tr class="tr-empty">
+                            <td colspan="2">Todos los permisos han sido asignados</td>
+                        </tr>
+                    `;
+                    $('#table-not-assigneds').append(emptyMsg);
+                }
+                $('#table-assigneds .tr-empty').remove();
+                let row = `
+                    <tr>
+                        <td>${permission.title}</td>
+                        <td>
+                            <input type="hidden" class="id-assigned-permission" value="${permission.id}" />
+                            <button class="btn btn-sm btn-outline-danger delete-assigned">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                $('#table-assigneds').append(row);
+            }
+
+            function notAssign(permission) {
+                if ($('#table-assigneds tr').length == 0) {
+                    let emptyMsg = `
+                        <tr class="tr-empty">
+                            <td colspan="2">No hay ningún permiso asignado</td>
+                        </tr>
+                    `;
+                    $('#table-assigneds').append(emptyMsg);
+                }
+                $('#table-not-assigneds .tr-empty').remove();
+                let row = `
+                    <tr>
+                        <td>${permission.title}</td>
+                        <td>
+                            <input type="hidden" class="id-not-assigned-permission" value="${permission.id}" />
+                            <button class="btn btn-sm btn-outline-success add-assigned">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                $('#table-not-assigneds').append(row);
+            }
+
+            // Ajax request start and complete
+            $(document).ajaxStart(function (e) {
+                var className = e.target.activeElement.className;
+                if (className.includes("assigned")) {
+                    $('.fa-spinner').removeClass('d-none');
+                    $('.delete-assigned').attr('disabled', true);
+                    $('.add-assigned').attr('disabled', true);
+                } else {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Espere por favor',
+                        text: 'Eliminando',
+                        allowOutsideClick: false
+                    });
+                    Swal.showLoading();
+                }
+            });
+            $(document).ajaxComplete(function (e) {
+                $('.fa-spinner').addClass('d-none');
+                $('.delete-assigned').attr('disabled', false);
+                $('.add-assigned').attr('disabled', false);
+                Swal.close();
+            });
+        });
+    </script>
+}
+

@@ -1,0 +1,63 @@
+﻿@model IEnumerable<Utilitarios.TelegramBot>
+
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Areas/SuperAdmin/Views/Shared/_LayoutSuperAdmin.cshtml";
+}
+
+<br />
+<h5 class="text-muted d-block text-center" style="font-family: 'Century Gothic';">TELEGRAM BOT</h5>
+<hr />
+
+@if (Model.Count() == 0)
+{
+    <div class="container">
+        <a asp-action="Create" class="btn btn-sm btn-info">Agregar</a>
+    </div>
+
+    <div class="container mt-3">
+        <div class="alert alert-light text-center">
+            <h4 class="alert-heading text-muted">No se encontraron resultados</h4>
+            <i class="text-muted fa-3x far fa-folder-open"></i>
+        </div>
+    </div>
+}
+
+<div class="row mt-3 justify-content-center">
+    @foreach (var item in Model)
+    {
+        <div class="col-md-4 col-sm-6 col-xs-12">
+            <div class="card shadow">
+                <div class="card-body">
+                    <dl class="dl-horizontal">
+                        <dt class="text-muted">
+                            @Html.DisplayNameFor(x => item.Title)
+                        </dt>
+                        <dd>
+                            @Html.DisplayFor(x => item.Title)
+                        </dd>
+                        <dt class="text-muted">
+                            @Html.DisplayNameFor(x => item.AccessToken)
+                        </dt>
+                        <dd>
+                            @Html.DisplayFor(x => item.AccessToken)
+                        </dd>
+                    </dl>
+                </div>
+                <div class="card-footer row">
+                    <div class="col">
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-block btn-sm btn-outline-primary">Editar</a>
+                    </div>
+                    <div class="col">
+                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-block btn-sm btn-outline-danger">Eliminar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+<br />
+
+@section Scripts {
+    <script type="text/javascript" src="~/js/navigation.js"></script>
+}

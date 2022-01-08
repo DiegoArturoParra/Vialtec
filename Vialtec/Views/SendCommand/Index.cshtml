@@ -1,0 +1,205 @@
+﻿
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<br />
+<h5 class="text-muted d-block text-center" style="font-family: 'Century Gothic';">GESTIÓN REMOTA</h5>
+<hr />
+<div class="row justify-content-center">
+    <div class="col-md-4 col-sm-6 col-xs-12">
+        <b class="text-muted">Grupos</b>
+        <select id="EquipmentGroupId" class="form-control" asp-items="ViewBag.EquipmentGroupId"></select>
+        <br/>
+        <b class="text-muted">Dispositivos</b>
+        <select id="EquipmentId" class="form-control">
+            @*equipments*@
+        </select>
+        <br />
+        <b class="text-muted">Comandos</b>
+        <div id="precommands" class="text-center">
+            @*precommands*@
+        </div>
+    </div>
+</div>
+<div class="row justify-content-center mt-5">
+    <div class="col-8 text-center d-none" id="spinner">
+        <div class="spinner-grow" style="width: 3rem; height: 3rem;" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+    <div class="col-8 d-none" id="container-progress">
+        <div class="progress">
+            <div class="progress-bar progress-bar-striped bg-info" role="progressbar" style="width: 0%" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+    </div>
+</div>
+<br />
+
+@section Scripts {
+    <script type="text/javascript">
+        $(document).ready(function (e) {
+
+            $(document).ajaxStart(function (e) {
+            });
+
+            $(document).ajaxComplete(function (e) {
+            });
+
+            // Obtener equipments por equipmentGroupId ------------------
+            getEquipments = (equipmentGroupId) => {
+                $.ajax({
+                    url: "@Url.Action("GetEquipmentsByEquipmentGroupId", "SendCommand")",
+                    data: {
+                        equipmentGroupId
+                    },
+                    type: "get"
+                }).done(equipments => {
+                    showEquipments(equipments);
+                }).catch(console.error);
+            }
+
+            $('#EquipmentGroupId').change(function (e) {
+                getEquipments($(this).val());
+            });
+
+            showEquipments = (equipments) => {
+                $('#EquipmentId option').remove();
+                if (equipments.length == 0) {
+                    const optionEmpty = `<option value="-1">No hay dispositivos</option>`;
+                    $('#EquipmentId').append(optionEmpty);
+                } else {
+                    equipments.forEach(equipment => {
+                        const option = `<option value="${equipment.id}">${equipment.equipmentAlias}</option>`;
+                        $('#EquipmentId').append(option);
+                    });
+                }
+                // Actualizar los precommands también
+                getPrecommands($('#EquipmentId').val());
+            }
+            // -----------------------------------------------------------
+
+            // On change para equipments
+            $('#EquipmentId').change(function (e) {
+                getPrecommands($(this).val());
+            });
+
+            //---- Obtener Precommands por equipmentId -------------------
+            getPrecommands = (equipmentId) => {
+                $.ajax({
+                    url: "@Url.Action("GetPrecommandsByEquipmentId", "SendCommand")",
+                    data: {
+                        equipmentId
+                    },
+                    type: "get"
+                }).done(precommandCustomerNames => {
+                    showPrecommands(precommandCustomerNames);
+                }).catch(console.error);
+            }
+
+            showPrecommands = (precommandCustomerNames) => {
+                $('#precommands .input-group').remove();
+                if (precommandCustomerNames.length == 0) {
+                    const empty = `
+                        <div class="input-group">
+                            <input type="text" class="form-control" readonly value="No hay comandos">
+                        </div>
+                    `;
+                    $('#precommands').append(empty);
+                } else {
+                    precommandCustomerNames.forEach(item => {
+                        const option = `
+                            <div class="input-group input-group-sm mb-2">
+                                <input type="text" class="form-control" readonly
+                                    value="${ item.customerTitle }">
+                                <div class="input-group-append">
+                                    <button type="button" id="${ item.precommand.id }" 
+                                        class="btn btn-info btn-precommand">
+                                        Enviar
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        $('#precommands').append(option);
+                    });
+                }
+            }
+            // ------------------------------------
+
+            // Enviar comando -----------------------------
+            $('#precommands').on('click','.btn-precommand', function (e) {
+                const precommandId = $(this).attr('id');
+                const equipmentId = $('#EquipmentId').val();
+                // Almacenar comando
+                sendCommand(precommandId, equipmentId);
+            });
+
+            sendCommand = (precommandId, equipmentId) => {
+                // Deshabilitar buttons
+                $('#precommands .btn-precommand').addClass('disabled');
+                // Mostrar spinner
+                $('#spinner').removeClass('d-none');
+                $.ajax({
+                    url: "@Url.Action("SaveCommand", "SendCommand")",
+                    data: {
+                        precommandId,
+                        equipmentId
+                    },
+                    type: "get"
+                }).done(commandId => {
+                    // Ocultar spinner
+                    $('#spinner').addClass('d-none');
+                    if (commandId !== -1) {
+                        waitDeliveryState(commandId);
+                    } else {
+                        Swal.fire('Error', 'Ha ocurrido un error', 'error');
+                    }
+                }).catch(console.error);
+            }
+            // --------------------------------------------
+
+            // Verificar el DeliveryState ha cambiado valor
+            waitDeliveryState = (commandId) => {
+                // Mostrar el contenedor de progress-bar
+                $('#container-progress').removeClass('d-none');
+                let contador = 0;
+                let interval = setInterval(async () => {
+                    contador += 1;
+                    $('.progress-bar').css('width', `${contador * 10}%`);
+                    const state = await consultDeliveryState(commandId);
+                    console.log({ state });
+                    if (state == 3 || contador == 10) {
+                        // Terminar intervalo
+                        clearInterval(interval);
+                        // Habilitar buttons
+                        $('#precommands .btn-precommand').removeClass('disabled');
+                        // Ocultar contenedor de progress bar
+                        $('#container-progress').addClass('d-none');
+                        // Reiniciar el porcentaje del progress-bar
+                        $('.progress-bar').css('width', '0%');
+
+                        // Mostrar mensaje de éxito o no
+                        if (state == 3) {
+                            Swal.fire('Enviado', 'El comando se ha enviado exitosamente', 'success');
+                        } else {
+                            Swal.fire('Advertencia', 'El comando no se ha podido enviar', 'warning');
+                        }
+                    }
+                }, 1000);
+            }
+
+            consultDeliveryState = (commandId) => {
+                return $.ajax({
+                    url: "@Url.Action("ConsultCommandDeliveryState", "SendCommand")",
+                    data: { commandId },
+                    type: "get"
+                });
+            }
+
+            // Llamada inicial a los métodos
+            getEquipments($('#EquipmentGroupId').val());
+            // ---------------------------------------------
+        });
+    </script>
+}

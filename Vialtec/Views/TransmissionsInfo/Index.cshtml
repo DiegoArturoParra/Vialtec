@@ -1,0 +1,251 @@
+﻿@model PaginatedList<Utilitarios.TransmissionInfo>
+
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var equipmentGroups = ViewData["equipmentGroups"] as List<Utilitarios.EquipmentGroup>;
+    int totalPages = (int)ViewData["totalPages"];
+}
+
+<br />
+<h5 class="text-muted d-block text-center" style="font-family: 'Century Gothic';">TRANSMISIONES</h5>
+<hr />
+<input type="hidden" id="customer-info-id" value="@ViewData["customerInfoId"]" />
+<div class="row justify-content-center">
+    <div class="col-md-10 col-sm-12 table-responsive">
+        <button type="button" class="btn btn-sm btn-outline-info" data-toggle="modal" data-target="#exampleModal">
+           Filtrar
+        </button>
+        <div class="float-right">
+            <a class="btn btn-sm btn-outline-warning" asp-action="Index" data-toggle="tooltip" title="Deshacer filtros">
+                <i class="fas fa-sync"></i>
+            </a>
+        </div>
+        <input type="hidden" id="totalResults" value="@Model.Count()" />
+        <table class="table table-sm table-bordered mt-2">
+            <thead class="thead-dark text-center">
+                <tr>
+                    <th style="width: 250px;">
+                        @Html.DisplayNameFor(model => model[0].EventAlias)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].DeviceDt)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].ServerDt)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].GpsValid)
+                    </th>
+                    <th>Mapa</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Count() == 0)
+                {
+                    <tr>
+                        <td colspan="5" class="text-center">
+                            <b class="text-muted">No se encontraron resultados para los filtros aplicados</b>
+                        </td>
+                    </tr>
+                }
+                @foreach (var item in Model)
+                {
+                    <tr class="transmissions-rows">
+                        <td class="pl-2">
+                            @Html.DisplayFor(modelItem => item.EventAlias)
+                            <input type="hidden" value="@item.EventAlias"/>
+                        </td>
+                        <td class="pl-2">
+                            @Html.DisplayFor(modelItem => item.DeviceDt)
+                        </td>
+                        <td class="pl-2">
+                            @Html.DisplayFor(modelItem => item.ServerDt)
+                        </td>
+                        <td class="text-center">
+                            @{
+                                string checkedStr = (@item.GpsValid != null && @item.GpsValid == true) && (item.Latitude != null && item.Longitude != null) ? "checked" : "";
+                            }
+                            <input type="checkbox" disabled @checkedStr />
+                        </td>
+                        <td class="text-center">
+                            @if (item.Latitude != null && item.Longitude != null)
+                            {
+                                <button id="@item.Id" class="btn btn-sm btn-outline-info btn-map">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            }
+                            else
+                            {
+                                <button id="@item.Id" class="btn btn-sm btn-outline-info disabled">
+                                    <i class="fas fa-eye-slash"></i>
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        @if (Model.Count() == 0)
+        {
+            <div class="alert alert-light text-center">
+                <i class="text-muted fa-3x far fa-folder-open"></i>
+            </div>
+        }
+        <div class="text-center">
+            @{
+                var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
+                var nextDisabled = !Model.HasNextPage ? "disabled" : "";
+            }
+            @if (totalPages > 1)
+            {
+                <a asp-action="Index"
+                   asp-route-dateInit="@ViewData["datetime-inicial"]"
+                   asp-route-dateFinal="@ViewData["datetime-final"]"
+                   asp-route-customerModelEventIds="@ViewData["customerModelEventIds"]"
+                   asp-route-equipmentGroupId="@ViewData["equipmentGroupId"]"
+                   asp-route-equipmentId="@ViewData["equipmentId"]"
+                   asp-route-pageNumber="@(Model.PageIndex - 1)"
+                   class="btn btn-sm btn-outline-info @prevDisabled">
+                    <i class="fas fa-angle-left"></i>
+                </a>
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    string badgeClass = i == Model.PageIndex ? "badge-info" : "badge-light text-muted";
+                    <a asp-action="Index"
+                       asp-route-dateInit="@ViewData["datetime-inicial"]"
+                       asp-route-dateFinal="@ViewData["datetime-final"]"
+                       asp-route-customerModelEventIds="@ViewData["customerModelEventIds"]"
+                       asp-route-equipmentGroupId="@ViewData["equipmentGroupId"]"
+                       asp-route-equipmentId="@ViewData["equipmentId"]"
+                       asp-route-pageNumber="@i">
+                        <span class="number-page badge @badgeClass" style="transition: 0.5s;">@i</span>
+                    </a>
+                }
+                <a asp-action="Index"
+                   asp-route-dateInit="@ViewData["datetime-inicial"]"
+                   asp-route-dateFinal="@ViewData["datetime-final"]"
+                   asp-route-customerModelEventIds="@ViewData["customerModelEventIds"]"
+                   asp-route-equipmentGroupId="@ViewData["equipmentGroupId"]"
+                   asp-route-equipmentId="@ViewData["equipmentId"]"
+                   asp-route-pageNumber="@(Model.PageIndex + 1)"
+                   class="btn btn-sm btn-outline-info @nextDisabled">
+                    <i class="fas fa-angle-right"></i>
+                </a>
+            }
+        </div>
+    </div>
+</div>
+<br />
+
+<!-- Modal Filtros -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <b class="text-muted">Filtrar transmisiones</b>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form asp-action="Index" method="get" id="formFilter">
+                    <div class="row">
+                        <div class="col-md-8 col-sm-12">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <b class="text-muted">Grupos</b>
+                                        <select id="equipmentGroupId" name="equipmentGroupId" class="form-control form-control-sm">
+                                            @if (ViewData["equipmentGroupId"] == null)
+                                            {
+                                                @foreach (var group in equipmentGroups)
+                                                {
+                                                    <option value="@group.Id">@group.Title</option>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                @foreach (var group in equipmentGroups)
+                                                {
+                                                    if (Convert.ToInt32(ViewData["equipmentGroupId"]) == group.Id)
+                                                    {
+                                                        <option value="@group.Id" selected>@group.Title</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@group.Id">@group.Title</option>
+                                                    }
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <b class="text-muted">Dispositivos</b>
+                                        <select id="equipmentId" name="equipmentId" class="form-control form-control-sm">
+                                            @*aqui se colocarán los items de la petición AJAX*@
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <b class="text-muted">Fecha Inicial</b>
+                                        <input type="datetime-local" name="dateInit" id="datetime-inicial" class="form-control form-control-sm" value="@ViewData["datetime-inicial"]" />
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <b class="text-muted">Fecha Final</b>
+                                        <input type="datetime-local" name="dateFinal" id="datetime-final" class="form-control form-control-sm" value="@ViewData["datetime-final"]" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-12">
+                            <input type="hidden" id="customerModelEventIds" name="customerModelEventIds" value="@ViewData["customerModelEventIds"]" />
+                            <b class="text-muted">Eventos</b>
+                            <div class="form-group" id="check-events" style="max-height: 105px; overflow: auto;">
+                                @*eventos*@
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row justify-content-center mb-2">
+                        <div class="col-4">
+                            <button type="button" id="btn-filtrar" class="btn btn-block btn-sm btn-outline-info">Aplicar</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Maps -->
+<div class="modal fade" id="mapModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <b class="text-muted">Transmisión</b>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="map" class="w100" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Make sure you put this AFTER Leaflet's CSS -->
+    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==" crossorigin=""></script>
+
+    <script type="text/javascript" src="~/js/transmission-info.js"></script>
+    <script type="text/javascript" src="~/js/navigation.js"></script>
+}
+

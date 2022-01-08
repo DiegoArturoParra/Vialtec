@@ -1,0 +1,124 @@
+﻿@model Utilitarios.CustomerUser
+
+@{
+    if (User.IsInRole("Admin"))
+    {
+        Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+    }
+    else if (User.IsInRole("CustomerAdmin"))
+    {
+        Layout = "~/Views/Shared/_Layout.cshtml";
+    }
+    ViewData["Title"] = "Edit";
+    var permissions = ViewData["permissions"] as List<Utilitarios.SinglePermission>;
+}
+
+<br />
+<div class="row justify-content-center">
+    <div class="col-md-6 col-sm-8 col-xs-10">
+        <a class="btn btn-sm btn-outline-info animate__animated animate__backInUp" asp-action="Index">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div class="card shadow animate__animated animate__backInDown">
+            <div class="card-header">
+                <b class="text-muted d-block text-center">Gestionar permisos del usuario</b>
+            </div>
+            <div class="card-body row">
+                <div class="col-md-6 col-sm-12">
+                    <div class="form-group">
+                        <label class="control-label text-muted">Usuario</label>
+                        <br />
+                        <span>@Model.Email</span>
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-12">
+                    @*<div class="form-group">
+                        <label class="control-label text-muted">Cliente</label>
+                        <br />
+                        <span>@Model.CustomerInfo.Title</span>
+                    </div>*@
+                </div>
+                <div class="col-12">
+                    <b class="text-muted">Permisos</b>
+                    <div class="form-group"
+                         style="max-height: 200px; overflow: auto; padding: 10px;">
+                        @*permisos*@
+                        @foreach (var permission in permissions)
+                        {
+                            <div class="input-group input-group-sm mb-3">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" class="checkbox-permission" id="permission-@permission.Id">
+                                    </div>
+                                </div>
+                                <input type="text" readonly class="form-control" value="@permission.Title">
+                            </div>
+                        }
+                    </div>
+                    @*Formulario al que enviaremos la información de los permisos de acceso*@
+                    <form id="form1" asp-action="Edit">
+                        <input type="hidden" name="customerUserId" id="customerUserId" value="@Model.Id" />
+                        <input type="hidden" name="permissionIDsStr" id="permissionIDsStr" />
+                    </form>
+                </div>
+            </div>
+            <div class="card-footer text-center">
+                <div class="row justify-content-center">
+                    <div class="col-md-6 col-sm-10">
+                        <input type="button" id="btn-submit" value="Actualizar" 
+                               class="btn btn-block btn-outline-info" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script type="text/javascript">
+        $(document).ready(function (e) {
+
+            loadPermissionsByCustomerUserId = (customerUserId) => {
+                $.ajax({
+                    url: "@Url.Action("GetPermissionsByCustomerUserId", "CustomerUserPermissions")",
+                    data: {
+                        customerUserId
+                    },
+                    type: "get"
+                }).done(({ permissions }) => {
+                    showPermissionsByCustomerUserId(permissions);
+                }).catch(console.error);
+            }
+
+            loadPermissionsByCustomerUserId($('#customerUserId').val());
+
+            showPermissionsByCustomerUserId = (permissions) => {
+                if (permissions.length == 0) {
+                    return;
+                }
+
+                permissions.forEach(permission => {
+                    $(`#permission-${ permission.id }`).prop('checked', true);
+                });
+            }
+
+
+            // Submit formulario
+            $('#btn-submit').click(function (e) {
+                let permissionIDs = [];
+                $('.checkbox-permission').each(function (e) {
+                    if ($(this)[0].checked) {
+                        const id = $(this).attr('id').split('-')[1];
+                        permissionIDs.push(id);
+                    }
+                });
+                const permissionsIDsStr = permissionIDs.join('#');
+                $('#permissionIDsStr').val(permissionsIDsStr);
+                $('#form1').submit();
+            });
+        });
+    </script>
+}
+

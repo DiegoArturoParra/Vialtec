@@ -1,0 +1,20 @@
+﻿html, body {
+    height: 100%;
+    margin: 0px;
+}
+
+#map {
+    width: 100%;
+    height: 93%;
+}
+
+.leaflet-tooltip {
+    padding: 0px 5px !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    color: #fff !important;
+    border: 4px solid #f24150 !important;
+}
+
+.form-check input[type=radio], .form-check label {
+    cursor: pointer;
+}

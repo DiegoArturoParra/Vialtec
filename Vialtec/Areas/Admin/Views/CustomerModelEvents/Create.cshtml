@@ -1,0 +1,144 @@
+﻿@model Utilitarios.CustomerModelEvent
+
+@{
+    ViewData["Title"] = "Create";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<br />
+<div class="row justify-content-center">
+    <div class="col-md-8 col-sm-10 col-xs-12">
+        <a class="btn btn-sm btn-outline-info animate__animated animate__backInUp" asp-action="Index">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <form asp-action="Create" id="form1">
+            <div class="card shadow animate__animated animate__backInDown">
+                <div class="card-header">
+                    <b class="text-muted d-block text-center">Nuevo Evento</b>
+                </div>
+                <div class="card-body row">
+                    <div class="col-md-6 col-sm-12">
+                        <div class="form-group">
+                            <label for="CategoryId" class="control-label text-muted">Categoría</label>
+                            <select id="CategoryId" class="form-control" asp-items="ViewBag.CategoryId"></select>
+                            <span id="validation-categoryId" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="ModelId" class="control-label text-muted">Modelos</label>
+                            <select id="ModelId" class="form-control"></select>
+                            <span id="validation-modelId" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="CustomerInfoId" class="control-label text-muted"></label>
+                            <select asp-for="CustomerInfoId" class="form-control" asp-items="ViewBag.CustomerInfoId"></select>
+                            <span asp-validation-for="CustomerInfoId" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-sm-12">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <div class="form-group">
+                            <label asp-for="ModelEventId" class="control-label text-muted"></label>
+                            <select asp-for="ModelEventId" class="form-control"></select>
+                            <span asp-validation-for="ModelEventId" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Title" class="control-label text-muted"></label>
+                            <input asp-for="Title" class="form-control" />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <div class="row justify-content-center">
+                        <div class="col-md-6 col-sm-10">
+                            <input type="submit" value="Agregar" class="btn btn-block btn-outline-info" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script type="text/javascript">
+        $(document).ready(function (e) {
+
+            // Verificar antes de enviar el formulario
+            $('#form1').submit(function (e) {
+                const modelEventId = $('#ModelEventId').val();
+                if (modelEventId == '-1') {
+                    e.preventDefault();
+                    Swal.fire('Error', 'Es necesario seleccionar un evento', 'error');
+                }
+            });
+
+            // Obtener los modelos para la categoryId
+            $('#CategoryId').change(function (e) {
+                getModelsByCategoryId($(this).val());
+            });
+            // Obtener los modelos por la categoría seleccionada
+            getModelsByCategoryId = (categoryId) => {
+                $.ajax({
+                    url: "@Url.Action("GetModelsByCategoryId", "CustomerModelEvents")",
+                    data: { categoryId },
+                    type: "get"
+                }).then(models => {
+                    $('#ModelId option').remove();
+                    if (models.length == 0) {
+                        const emptyOption = `<option value="-1">Sin modelos</option>`;
+                        $('#ModelId').append(emptyOption);
+                    } else {
+                        models.forEach(model => {
+                            const option = `<option value="${model.id}">${model.title}</option>`;
+                            $('#ModelId').append(option);
+                        });
+                    }
+                    // Una vez que los Modelos hayan sido traidos, se traen los ModelEvents
+                    getModelEventsByModelAndCustomerInfo($('#ModelId').val(), $('#CustomerInfoId').val());
+                }).catch(console.error);
+            }
+
+            // Llamada inicial del método
+            getModelsByCategoryId($('#CategoryId').val());
+            //---------------------------------------------------
+
+            // --------------------------------------------------
+            // Evento Change del select del modelo
+            $('#ModelId').change(function (e) {
+                getModelEventsByModelAndCustomerInfo($(this).val(), $('#CustomerInfoId').val());
+            });
+            // Evneto Change del select de clientes
+            $('#CustomerInfoId').change(function (e) {
+                getModelEventsByModelAndCustomerInfo($('#ModelId').val(), $(this).val());
+            });
+
+            // Obtener los ModelEvents por el model y cliente seleccionado
+            getModelEventsByModelAndCustomerInfo = (modelId, customerInfoId) => {
+                $.ajax({
+                    url: "@Url.Action("GetModelEventsByModelAndCustomerInfo", "CustomerModelEvents")",
+                    data: { modelId, customerInfoId },
+                    type: "get"
+                }).then(modelEvents => {
+                    $('#ModelEventId option').remove();
+                    if (modelEvents.length == 0) {
+                        const emptySpan = `<option value="-1">No hay eventos para mostrar</span>`;
+                        $('#ModelEventId').append(emptySpan);
+                    } else {
+                        modelEvents.forEach(item => {
+                            const option = `<option value="${item.id}">${ item.event.title }</span>`;
+                            $('#ModelEventId').append(option);
+                        });
+                    }
+                }).catch(console.error);
+            }
+            // ----------------------------------------------------------------------------
+
+            $('#model-events').on('click', '.badge', function (e) {
+                console.log($(this).attr('id'));
+            });
+        });
+    </script>
+}

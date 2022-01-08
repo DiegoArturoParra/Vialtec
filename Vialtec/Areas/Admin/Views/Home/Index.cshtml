@@ -1,0 +1,26 @@
+﻿
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+    var routes = ViewData["routes"] as List<Vialtec.Models.Route>;
+}
+
+<br />
+<h2 class="text-muted">DISTRIBUIDOR</h2>
+<hr />
+<div class="row justify-content-center mt-5">
+   @foreach(var route in routes)
+   {
+       <div class="col-md-3 col-sm-6 col-xs-12">
+           <div class="card" style="background-color: #ededed;">
+               <div class="card-body">
+                   <b class="text-muted text-center d-block">@route.Title</b>
+                   <div class="form-group text-center mt-2">
+                       <i class="@route.Icon fa-2x text-muted"></i>
+                   </div>
+                   <a asp-controller="@route.Controller" asp-action="Index" class="btn btn-sm btn-block btn-outline-primary">Consultar</a>
+               </div>
+           </div>
+       </div>
+   }
+</div>

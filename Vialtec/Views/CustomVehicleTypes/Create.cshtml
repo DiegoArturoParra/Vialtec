@@ -1,0 +1,117 @@
+﻿@model Utilitarios.CustomVehicleType
+
+@{
+    ViewData["Title"] = "Create";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<br />
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-sm-10 col-xs-12">
+        <a class="btn btn-sm btn-outline-info animate__animated animate__backInUp" asp-action="Index">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <form asp-action="Create" id="form1">
+            <div class="card shadow animate__animated animate__backInDown">
+                <div class="card-header">
+                    <b class="text-muted d-block text-center">Personalizar Categoría</b>
+                </div>
+                <div class="card-body row justify-content-center">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="col-lg-8 col-sm-12 col-xs-12">
+                        <div class="form-group">
+                            <label asp-for="SpeedReportCustomerId" class="control-label text-muted"></label>
+                            <select asp-for="SpeedReportCustomerId" class="form-control" asp-items="ViewBag.SpeedReportCustomerId"></select>
+                            <span asp-validation-for="SpeedReportCustomerId" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="VehicleTypeId" class="control-label text-muted"></label>
+                            <select asp-for="VehicleTypeId" class="form-control" asp-items="ViewBag.VehicleTypeId"></select>
+                            <span asp-validation-for="VehicleTypeId" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="CustomTitle" class="control-label text-muted"></label>
+                            <input asp-for="CustomTitle" class="form-control" />
+                            <span asp-validation-for="CustomTitle" class="text-danger"></span>
+                        </div>
+                    </div>                    
+                    <div class="col-lg-4 col-sm-5 col-xs-6">
+                        <br/>
+                        <input type="hidden" id="Picture" name="Picture" />
+                        <div class="text-center">
+                            <img id="no-image" class="w-100" src="~/img/image-not-found.png" />
+                            <img id="img-preview" class="w-100 d-none" style="max-height: 145px;" />
+                        </div>
+                        <hr />
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" accept="image/*" id="img-upload" />
+                            <label class="custom-file-label" for="img-upload">Seleccionar imagen</label>
+                        </div>
+                        <small class="text-danger d-none" id="picture_validate">La imagen es requerida</small>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <div class="row justify-content-center">
+                        <div class="col-md-6 col-sm-10">
+                            <input type="submit" id="btn-save" value="Agregar" class="btn btn-block btn-outline-info" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script type="text/javascript">
+        $(document).ready(function (e) {
+            // Submit form
+            $('#form1').submit(function (e) {
+                var dataUrl = $('#img-preview').attr('src');
+
+                if (!dataUrl) {
+                    e.preventDefault();
+                    $('#picture_validate').removeClass('d-none');
+                    return;
+                } else {
+                    $('#picture_validate').addClass('d-none');
+                    $('#Picture').val(dataUrl);
+                }
+            });
+
+            // Input file change
+            $('.custom-file-input').on('change', function (event) {
+                // Cambiar Label Input file
+                var filename = $(this).val().split('\\')[2];
+                $(this).next('.custom-file-label').html(filename);
+
+                // File y Preview
+                var preview = $('#img-preview')[0];
+                var file = $('#img-upload')[0].files[0];
+
+                var reader = new FileReader();
+                // reader
+                reader.onloadend = function () {
+                    preview.src = reader.result;
+                }
+                if (file) {
+                    // cambiará el preview.src
+                    reader.readAsDataURL(file);
+                    $('#picture_validate').addClass('d-none');
+                    $('#no-image').addClass('d-none');
+                    $('#img-preview').removeClass('d-none');
+                    $('#btn-save').removeClass('disabled');
+                } else {
+                    preview.src = '';
+                    $('#img-preview').addClass('d-none');
+                    $('#picture_validate').removeClass('d-none');
+                    $('#no-image').removeClass('d-none');
+                    $(this).next('.custom-file-label').html('Seleccionar imagen');
+                    $('#btn-save').addClass('disabled');
+                }
+            });
+        });
+    </script>
+}

@@ -1,0 +1,185 @@
+﻿@model PaginatedList<Utilitarios.Device>
+
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Areas/SuperAdmin/Views/Shared/_LayoutSuperAdmin.cshtml";
+    var distributorInfos = ViewData["distributorInfos"] as List<Utilitarios.DistributorInfo>;
+    int totalPages = (int)ViewData["totalPages"];
+}
+
+<br />
+<h5 class="text-muted d-block text-center" style="font-family: 'Century Gothic';">DISPOSITIVOS</h5>
+<hr />
+<div class="row justify-content-center">
+    <div class="col-md-11 col-sm-12 table-responsive">
+        <div class="row mb-2">
+            <div class="col-md-4 col-sm-12 mb-1">
+                <a asp-action="Create" class="btn btn-sm btn-info">Agregar&nbsp;&nbsp;<i class="fas fa-plus"></i></a>
+                <div class="float-right">
+                    <a class="btn btn-sm btn-outline-warning" asp-action="Index" data-toggle="tooltip" title="Deshacer filtros">
+                        <i class="fas fa-sync"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-8 col-sm-12">
+                <form asp-action="Index" method="get" id="formFilter">
+                    <div class="row">
+                        <div class="col-4">
+                            <select class="form-control form-control-sm" name="distributorInfoId" onchange="document.getElementById('formFilter').submit();">
+                                <option value="-1">-Distribuidor-</option>
+                                @foreach (var item in distributorInfos)
+                                {
+                                    @if (item.Id == Convert.ToInt32(ViewData["distributorInfoId"]))
+                                    {
+                                        <option value="@item.Id" selected>@item.Title</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.Id">@item.Title</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <input class="form-control form-control-sm" type="text" name="Serial" placeholder="Serial:" value="@ViewData["serial"]" />
+                        </div>
+                        <div class="col-4">
+                            <input type="submit" value="Filtrar" class="btn btn-block btn-sm btn-outline-info" />
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <table class="table table-sm table-bordered mt-2">
+            <thead class="thead-dark text-center">
+                <tr>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].AssetSerial)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].DistributorInfo)
+                    </th>
+                    <th style="width: 100px;">
+                        @Html.DisplayNameFor(model => model[0].CustomerInfo)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].Model)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].NetworkIdentifier)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].ZoneTime)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].CreationDT)
+                    </th>
+                    @*<th>
+            @Html.DisplayNameFor(model => model[0].BluetoothInfo)
+        </th>*@
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].DevPass)
+                    </th>
+                    <th colspan="2">Opciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (ViewBag.emptyMessage != null)
+                {
+                    <tr>
+                        <td colspan="9" class="text-center">
+                            <b class="text-muted">@ViewBag.emptyMessage</b>
+                        </td>
+                    </tr>
+                }
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="pl-2">
+                            @Html.DisplayFor(modelItem => item.AssetSerial)
+                        </td>
+                        <td class="pl-2">
+                            @Html.DisplayFor(modelItem => item.DistributorInfo.Title)
+                        </td>
+                        <td class="pl-2">
+                            @if (item.CustomerInfoId == null)
+                            {
+                                <span class="text-danger">No asignado</span>
+                            }
+                            else
+                            {
+                                @Html.DisplayFor(modelItem => item.CustomerInfo.Title)
+                            }
+                        </td>
+                        <td class="pl-2">
+                            @Html.DisplayFor(modelItem => item.Model.Title)
+                        </td>
+                        <td class="pl-2">
+                            @Html.DisplayFor(modelItem => item.NetworkIdentifier)
+                        </td>
+                        <td class="pl-2">
+                            @Html.DisplayFor(modelItem => item.ZoneTime)
+                        </td>
+                        <td class="pl-2">
+                            @Html.DisplayFor(modelItem => item.CreationDT)
+                        </td>
+                        @*<td class="pl-2">
+             @Html.DisplayFor(modelItem => item.BluetoothInfo)
+        </td>*@
+                        <td class="pl-2">
+                            @Html.DisplayFor(modelItem => item.DevPass)
+                        </td>
+                        <td class="text-center">
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </td>
+                        <td class="text-center">
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div class="text-center">
+            @{
+                var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
+                var nextDisabled = !Model.HasNextPage ? "disabled" : "";
+            }
+            @if (totalPages > 1)
+            {
+                <a asp-action="Index"
+                   asp-route-pageNumber="@(Model.PageIndex - 1)"
+                   asp-route-customerInfoId="@ViewData["customerInfoId"]"
+                   asp-route-serial="@ViewData["serial"]"
+                   class="btn btn-sm btn-outline-info @prevDisabled">
+                    <i class="fas fa-angle-left"></i>
+                </a>
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    string badgeClass = i == Model.PageIndex ? "badge-info" : "badge-light text-muted";
+                    <a asp-action="Index"
+                       asp-route-customerInfoId="@ViewData["customerInfoId"]"
+                       asp-route-serial="@ViewData["serial"]"
+                       asp-route-pageNumber="@i">
+                        <span class="number-page badge @badgeClass" style="transition: 0.5s;">@i</span>
+                    </a>
+                }
+                <a asp-action="Index"
+                   asp-route-customerInfoId="@ViewData["customerInfoId"]"
+                   asp-route-serial="@ViewData["serial"]"
+                   asp-route-pageNumber="@(Model.PageIndex + 1)"
+                   class="btn btn-sm btn-outline-info @nextDisabled">
+                    <i class="fas fa-angle-right"></i>
+                </a>
+            }
+        </div>
+    </div>
+</div>
+<br />
+
+@section Scripts {
+    <script type="text/javascript" src="~/js/navigation.js"></script>
+}

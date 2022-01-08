@@ -1,0 +1,43 @@
+﻿@model Utilitarios.DistributorUser
+
+@{
+    ViewData["Title"] = "Details";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<br />
+<h5 class="text-muted d-block text-center" style="font-family: 'Century Gothic';">INFORMACIÓN DISTRIBUIDOR</h5>
+<hr />
+<div class="row justify-content-center">
+    <div class="col-md-6 col-sm-8 col-xs-12">
+        <a class="btn btn-sm btn-outline-info animate__animated animate__backInUp" 
+            asp-area="Admin" asp-controller="Home" asp-action="Index">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div class="card shadow animate__animated animate__backInDown">
+            <div class="card-body">
+                <dl class="dl-horizontal">
+                    <dt class="text-muted">
+                        @Html.DisplayNameFor(model => model.Email)
+                    </dt>
+                    <dd >
+                        @Html.DisplayFor(model => model.Email)
+                    </dd>
+                    <dt class="text-muted">
+                        @Html.DisplayNameFor(model => model.SecurityProfileDist)
+                    </dt>
+                    <dd >
+                        @Html.DisplayFor(model => model.SecurityProfileDist.Title)
+                    </dd>
+                    <dt class="text-muted">
+                        @Html.DisplayNameFor(model => model.DistributorInfo)
+                    </dt>
+                    <dd >
+                        @Html.DisplayFor(model => model.DistributorInfo.Title)
+                    </dd>
+                </dl>
+                <a class="btn btn-sm btn-info" asp-action="ChangePassword" asp-route-distributorUserId="@Model.Id">Cambiar contraseña</a>
+            </div>
+        </div>
+    </div>
+</div>

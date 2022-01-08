@@ -1,0 +1,46 @@
+﻿@model Utilitarios.CustomerUser
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<br />
+<h5 class="text-muted d-block text-center" style="font-family: 'Century Gothic';">INFORMACIÓN USUARIO</h5>
+<hr />
+<div class="row justify-content-center">
+    <div class="col-md-10 col-sm-12">
+        <a class="btn btn-sm btn-outline-info animate__animated animate__backInUp" asp-controller="Home" asp-action="Index">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div class="card shadow animate__animated animate__backInDown">
+            <div class="card-body row justify-content-center p-0">
+                <div class="col-md-6 col-sm-12">
+                    <img alt="base64-image" src="data:image/png;base64, @Model.CustomerInfo.LogoBase64" class="w-100" height="280" />
+                </div>
+                <div class="col-md-6 col-sm-12 py-3 pl-4">
+                    <dl class="dl-horizontal">
+                        <dt class="text-muted">
+                            @Html.DisplayNameFor(model => model.Email)
+                        </dt>
+                        <dd>
+                            @Html.DisplayFor(model => model.Email)
+                        </dd>
+                        <dt class="text-muted">
+                            @Html.DisplayNameFor(model => model.CustomerInfo)
+                        </dt>
+                        <dd>
+                            @Html.DisplayFor(model => model.CustomerInfo.Title)
+                        </dd>
+                        <dt class="text-muted">
+                            @Html.DisplayNameFor(model => model.CustomerInfo.ZoneTime)
+                        </dt>
+                        <dd>
+                            @Html.DisplayFor(model => model.CustomerInfo.ZoneTime)
+                        </dd>
+                    </dl>
+                    <a asp-action="ChangePassword" asp-route-customerUserId="@Model.Id" class="btn btn-sm btn-info">Cambiar contraseña</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

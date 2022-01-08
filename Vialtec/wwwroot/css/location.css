@@ -1,0 +1,32 @@
+﻿html, body {
+    height: 100%;
+    margin: 0px;
+}
+
+#map {
+    width: 100%;
+    height: 93%;
+}
+
+#selecciones {
+    min-height: 150px;
+    max-height: 200px;
+    overflow: auto;
+}
+
+#selecciones::-webkit-scrollbar {
+    width: 10px;
+    background-color: #ccc;
+}
+
+#selecciones::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+    background-color: rgb(128, 128, 128);
+}
+
+.leaflet-tooltip {
+    padding: 0px 5px !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    color: #fff !important;
+}

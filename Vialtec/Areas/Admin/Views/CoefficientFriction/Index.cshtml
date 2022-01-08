@@ -1,0 +1,277 @@
+﻿
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+    var customersInfo = ViewData["customersInfo"] as List<Utilitarios.CustomerInfo>;
+}
+
+<br />
+<h5 class="text-muted d-block text-center" style="font-family: 'Century Gothic';">COEFICIENTE DE FRICCIÓN</h5>
+<hr />
+
+<form asp-action="Index" id="form1" enctype="multipart/form-data" method="post">
+    <div class="container mt-3">
+        <div class="row justify-content-center mb-4">
+            <div class="col-lg-6 col-sm-10 mb-2">
+                <div class="card shadow mb-2">
+                    <div class="card-body">
+                        <div class="form-group">
+                            <b class="text-muted">Cliente</b>
+                            <select id="customerInfoId" name="customerInfoId" class="form-control form-control-sm">
+                                <option value="">-Seleccione-</option>
+                                @foreach (var c in customersInfo)
+                                {
+                                    <option value="@c.Id">@c.Title</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <b class="text-muted">Reporte</b>
+                            <input type="text" id="muReportName" name="muReportName" class="form-control form-control-sm" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow">
+                    <div class="card-body">
+                        <b class="d-block text-muted text-center">CARGAR ARCHIVO</b>
+                        <div class="input-group">
+                            <div class="custom-file">
+                                <input type="file" name="uploadFile" id="uploadFile" class="custom-file-input"
+                                       accept=".csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+                                <label class="custom-file-label" for="uploadFile">Seleccionar archivo</label>
+                            </div>
+                        </div>
+                        <code id="msg-file-error" class="d-none"></code>
+                    </div>
+                    <div class="card-footer">
+                        <input type="button" id="btn-next" class="btn btn-sm btn-primary d-none" value="Siguiente" />
+                    </div>
+                </div>
+
+                @if (ViewData["success-message"] != null)
+                {
+                    <div class="alert alert-default-success shadow alert-dismissible fade show" role="alert">
+                        <h4 class="alert-heading">Hecho!</h4>
+                        <p>@ViewData["success-message"]</p>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                }
+
+                @if (ViewData["error-message"] != null)
+                {
+                    <div class="alert alert-default-danger shadow alert-dismissible fade show" role="alert">
+                        <h4 class="alert-heading">Ha ocurrido un error</h4>
+                        <p>@ViewData["error-message"]</p>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                }
+            </div>
+            <div class="col-12">
+                <input type="hidden" id="columns" name="columns" />
+                <table id="myTable" class="d-none table table-sm table-bordered shadow">
+                    <thead>
+                        <tr id="row-select-header"></tr>
+                    </thead>
+                    <tbody>
+                        <tr id="row-header"></tr>
+                    </tbody>
+                </table>
+                <div class="text-center">
+                    <button type="button" id="btn-upload" class="btn btn-success d-none">
+                        <i class="fas fa-upload"></i>
+                        Cargar reporte
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.13.5/xlsx.full.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.13.5/jszip.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function (e) {
+
+            const total_rows = 4;
+
+            const columns = [
+                { label: 'Seleccione', value: '' },
+                { label: 'Latitud', value: 'latitude' },
+                { label: 'Longitud', value: 'longitude' },
+                { label: 'Mu', value: 'mu' },
+                { label: 'Odómetro', value: 'odometer' }
+                //{ label: 'Fecha', value: 'date' },
+                //{ label: 'Temperatura Vía', value: 'tempVia' },
+                //{ label: 'Temperatura Ambiente', value: 'tempEnv' },
+                //{ label: 'Velocidad', value: 'speed' },
+                //{ label: 'PR', value: 'pr' }
+            ];
+
+            for (let i = 0; i < total_rows; i++) {
+                let th = `<th><select id="select-column-${i}" class="select-column form-control form-control-sm">`;
+                columns.forEach(column => {
+                    th += `<option value=${column.value}>${column.label}</option>`;
+                });
+                th += '</select></th>';
+                $('#row-select-header').append(th);
+            }
+
+            // Evento change para el input del archivo
+            $('#uploadFile').change(function (e) {
+                $('#myTable').addClass('d-none');
+                let error_message = '';
+                const file = $('#uploadFile')[0].files[0];
+                if (file) {
+                    $('.custom-file-label').html(file.name);
+                    const extension = file.name.split('.').reverse()[0];
+                    if (extension != 'xls' && extension != 'xlsx' && extension != 'csv') {
+                        error_message = 'Tipo de archivo inválido';
+                    }
+                } else {
+                    $('.custom-file-label').html('Seleccionar archivo');
+                    error_message = 'No has seleccionado ningún archivo';
+                }
+
+                $('#msg-file-error').html(error_message);
+                if (error_message) {
+                    $('#msg-file-error').removeClass('d-none');
+                    $('#btn-next').addClass('d-none');
+                } else {
+                    $('#msg-file-error').addClass('d-none');
+                    $('#btn-next').removeClass('d-none');
+                }
+            });
+
+            // MANEJO DE COLUMNAS Y SUS CABECEROS
+            var headers = [];
+            var selectColumns = [null, null, null, null];
+
+            // Click event to next
+            $('#btn-next').click(function (e) {
+                UploadProcess();
+            });
+
+            // Proceso de carga de excel
+            function UploadProcess() {
+                // Loading
+                Swal.fire({ icon: 'info', title: 'Espere por favor', text: 'Cargando información', allowOutsideClick: false });
+                Swal.showLoading();
+
+                //Reference the FileUpload element.
+                var fileUpload = document.getElementById("uploadFile");
+
+                //Validate whether File is valid Excel file.
+                var regex = /^([a-zA-Z0-9\s_\\.\-:])+(.xls|.xlsx|.csv)$/;
+                if (regex.test(fileUpload.value.toLowerCase())) {
+                    if (typeof (FileReader) != "undefined") {
+                        var reader = new FileReader();
+
+                        //For Browsers other than IE.
+                        if (reader.readAsBinaryString) {
+                            reader.onload = function (e) {
+                                GetTableFromExcel(e.target.result);
+                            };
+                            reader.readAsBinaryString(fileUpload.files[0]);
+                        } else {
+                            //For IE Browser.
+                            reader.onload = function (e) {
+                                var data = "";
+                                var bytes = new Uint8Array(e.target.result);
+                                for (var i = 0; i < bytes.byteLength; i++) {
+                                    data += String.fromCharCode(bytes[i]);
+                                }
+                                GetTableFromExcel(data);
+                            };
+                            reader.readAsArrayBuffer(fileUpload.files[0]);
+                        }
+                    } else {
+                        alert("This browser does not support HTML5.");
+                    }
+                } else {
+                    alert("Please upload a valid Excel file.");
+                }
+            };
+
+            function GetTableFromExcel(data) {
+                //Read the Excel File data in binary
+                var workbook = XLSX.read(data, {
+                    type: 'binary'
+                });
+
+                //get the name of First Sheet.
+                var Sheet = workbook.SheetNames[0];
+
+                //Read all rows from First Sheet into an JSON array.
+                var excelRows = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[Sheet]);
+
+                // Count rows
+                if (excelRows.length > 0) {
+                    $('#row-header td').remove();
+                    // Read headers
+                    headers = Object.keys(excelRows[0]);
+                    let row = '';
+                    for (let i = 0; i < total_rows; i++) {
+                        if (headers[i]) {
+                            row += `<td>${headers[i]}</td>`;
+                        } else {
+                            row += '<td style="background: #dc3545; opacity: .7;"></td>';
+                        }
+                    }
+                    $('#row-header').append(row);
+                    Swal.close();
+
+                    if (headers.length < total_rows) {
+                        Swal.fire('Error', 'El archivo no contiene la cantidad de filas necesarias', 'error');
+                    }
+
+                    $('#myTable').removeClass('d-none');
+                } else {
+                    Swal.fire('Error', 'El archivo no contiene filas', 'error');
+                }
+            };
+
+            // Select Column Event
+            $('#myTable').on('change', '.select-column', function (e) {
+                const id = $(this).attr('id').split('-')[2]; // index
+                const value = $(this).val();
+                if (selectColumns.includes(value) && value) {
+                    const index = selectColumns.indexOf(value);
+                    $(`#select-column-${index}`).val('');
+                    selectColumns[index] = null;
+                }
+                selectColumns[id] = value;
+
+                // Habilitar/Deshabilitar botón para la subida de datos
+                if (!selectColumns.includes(null)) {
+                    $('#btn-upload').removeClass('d-none');
+                } else {
+                    $('#btn-upload').addClass('d-none');
+                }
+            });
+
+            // Upload event
+            $('#btn-upload').click(function (e) {
+                const customerInfoId = $('#customerInfoId').val();
+                if (!customerInfoId) {
+                    Swal.fire('Error', 'El cliente es requerido', 'error');
+                    return;
+                }
+                const muReportName = $('#muReportName').val();
+                if (!muReportName) {
+                    Swal.fire('Error', 'El nombre del reporte es requerido', 'error');
+                    return;
+                }
+                const columns_str = JSON.stringify(selectColumns);
+                $('#columns').val(columns_str);
+                $('#form1').submit();
+            });
+        });
+    </script>
+}

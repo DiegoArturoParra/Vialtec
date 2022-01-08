@@ -1,0 +1,128 @@
+﻿@model PaginatedList<Utilitarios.CustomerEventNotification>
+
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    int totalPages = (int)ViewData["totalPages"];
+}
+
+<br />
+<h5 class="text-muted d-block text-center" style="font-family: 'Century Gothic';">NOTIFICACIÓN DE EVENTOS</h5>
+<hr />
+<div class="row justify-content-center">
+    <div class="col-11 table-responsive">
+        <div class="row mb-2">
+            <div class="col-md-4 col-sm-12 mb-1">
+                <a asp-action="Create" class="btn btn-sm btn-info">Agregar&nbsp;&nbsp;<i class="fas fa-plus"></i></a>
+            </div>
+        </div>
+        <table class="table table-sm table-bordered mt-2">
+            <thead class="thead-dark text-center">
+                <tr>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].CustomerModelEvent.ModelEvent.Model)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].CustomerModelEvent)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].EmailNotificationProfile)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].TelegramNotificationProfile)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model[0].BodyText)
+                    </th>
+                    <th colspan="2">Opciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (ViewBag.emptyMessage != null)
+                {
+                    <tr>
+                        <td colspan="6" class="text-center">
+                            <b class="text-muted">@ViewBag.emptyMessage</b>
+                        </td>
+                    </tr>
+                }
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="pl-2">
+                            @Html.DisplayFor(modelItem => item.CustomerModelEvent.ModelEvent.Model.Title)
+                        </td>
+                        <td class="pl-2">
+                            @Html.DisplayFor(modelItem => item.CustomerModelEvent.Title)
+                        </td>
+                        <td class="pl-2">
+                            @if (item.EmailNotificationProfileId == null)
+                            {
+                                <span class="text-danger">Ninguno</span>
+                            }
+                            else
+                            {
+                                @Html.DisplayFor(modelItem => item.EmailNotificationProfile.Title)
+                            }
+                        </td>
+                        <td class="pl-2">
+                            @if (item.TelegramNotificationProfileId == null)
+                            {
+                                <span class="text-danger">Ninguno</span>
+                            }
+                            else
+                            {
+                                @Html.DisplayFor(modelItem => item.TelegramNotificationProfile.Title)
+                            }
+                        </td>
+                        <td class="pl-2">
+                            @Html.DisplayFor(modelItem => item.BodyText)
+                        </td>
+                        <td class="text-center">
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </td>
+                        <td class="text-center">
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div class="text-center">
+            @{
+                var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
+                var nextDisabled = !Model.HasNextPage ? "disabled" : "";
+            }
+            @if (totalPages > 1)
+            {
+                <a asp-action="Index"
+                   asp-route-pageNumber="@(Model.PageIndex - 1)"
+                   class="btn btn-sm btn-outline-info @prevDisabled">
+                    <i class="fas fa-angle-left"></i>
+                </a>
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    string badgeClass = i == Model.PageIndex ? "badge-info" : "badge-light text-muted";
+                    <a asp-action="Index"
+                       asp-route-pageNumber="@i">
+                        <span class="number-page badge @badgeClass" style="transition: 0.5s;">@i</span>
+                    </a>
+                }
+                <a asp-action="Index"
+                   asp-route-pageNumber="@(Model.PageIndex + 1)"
+                   class="btn btn-sm btn-outline-info @nextDisabled">
+                    <i class="fas fa-angle-right"></i>
+                </a>
+            }
+        </div>
+    </div>
+</div>
+<br />
+
+@section Scripts {
+    <script type="text/javascript" src="~/js/navigation.js"></script>
+}

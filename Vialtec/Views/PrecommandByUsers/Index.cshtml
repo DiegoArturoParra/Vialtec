@@ -1,0 +1,111 @@
+﻿@model IEnumerable<Utilitarios.CustomerUser>
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<br />
+<h5 class="text-muted d-block text-center" style="font-family: 'Century Gothic';">USUARIOS - PRECOMANDOS</h5>
+<hr />
+
+<div class="container text-center d-none mt-3" id="loading">
+    <div class="spinner-grow" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
+</div>
+<div class="row justify-content-center mt-3" id="contenedor">
+
+    @if (Model.Count() == 0)
+    {
+        <div class="col-12">
+            <div class="alert alert-light">
+                <b class="text-muted">No se encontraron registros</b>
+            </div>
+        </div>
+    }
+
+    @foreach (var item in Model)
+    {
+        <div class="col-md-8 col-sm-12 mb-2 customer-user" id="customer-user-@item.Id">
+            <div class="card shadow">
+                <div class="card-body row">
+                    <div class="col-5 border-right">
+                        <input type="hidden" class="customer-user-id" value="@item.Id" />
+                        <dl class="dl-horizontal">
+                            <dt class="text-muted">
+                                Usuario
+                            </dt>
+                            <dd>
+                                <span>@item.Email</span>
+                            </dd>
+                        </dl>
+                    </div>
+                    <div class="col-7">
+                        <div class="precommandCustomerNames"
+                                style="min-height: 110px; max-height: 120px; overflow: auto; padding: 10px;">
+                            @*los precomandCustomerNames del customerUser*@
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a asp-action="Edit" asp-route-customerUserId="@item.Id" class="btn btn-sm btn-outline-info">
+                        Gestionar
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script type="text/javascript">
+        $(document).ajaxStart(function (e) {
+            $('#contenedor').addClass('d-none');
+            $('#loading').removeClass('d-none');
+        });
+        $(document).ajaxComplete(function (e) {
+            $('#contenedor').removeClass('d-none');
+            $('#loading').addClass('d-none');
+        });
+
+        $(document).ready(function(){
+            $('.customer-user').each(async function (e) {
+                const customerUserId = $(this).find('.customer-user-id').val();
+                loadPrecommandCustomerNamesByCustomerUserId(customerUserId);
+            });
+        });
+
+        loadPrecommandCustomerNamesByCustomerUserId = (customerUserId) => {
+            $.ajax({
+                url: "@Url.Action("GetPrecommandCustomerNamesByUser", "PrecommandByUsers")",
+                data: {
+                    customerUserId
+                },
+                type: "get"
+            }).done(({ customerUserId, precommandCustomerNames }) => {
+                showPrecomamndCustomerNamesByCustomerUserId(customerUserId, precommandCustomerNames);
+            }).catch(console.error);
+        }
+
+        showPrecomamndCustomerNamesByCustomerUserId = (customerUserId, precommandCustomerNames) => {
+            if (precommandCustomerNames.length == 0) {
+                const empty = `
+                    <input type="text" readonly class="form-control form-control-sm" value="Ninguno" />
+                `;
+                $(`#customer-user-${customerUserId} .precommandCustomerNames`).append(empty);
+            } else {
+                precommandCustomerNames.forEach(precommandCustomerName => {
+                    const option = `
+                        <div class="input-group input-group-sm mb-2">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-info" id="basic-addon2">${ precommandCustomerName.precommand.model.title }</span>
+                            </div>
+                            <input type="text" class="form-control" readonly value="${ precommandCustomerName.customerTitle }">
+                        </div>
+                    `;
+                    $(`#customer-user-${customerUserId} .precommandCustomerNames`).append(option);
+                });
+            }
+        }
+    </script>
+}

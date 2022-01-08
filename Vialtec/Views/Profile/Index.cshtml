@@ -1,0 +1,96 @@
+﻿@model Utilitarios.CustomerInfo
+
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<br />
+<h5 class="text-muted d-block text-center" style="font-family: 'Century Gothic';">CAMBIAR LOGO</h5>
+<hr />
+<div class="row justify-content-center">
+    <div class="col-md-4 col-sm-6 col-xs-10">
+        <form asp-action="Index" method="post" id="form1">
+            <input asp-for="Id" type="hidden" />
+            <div class="card shadow">
+                <img id="img-preview" class="card-img-top" style="max-height: 200px;" src="data:image/png;base64,@Model.LogoBase64" />
+                <img id="no-image" class="card-img-top d-none" style="max-height: 200px;" src="~/img/image-not-found.png" />
+                <div class="card-body">
+                    <dl class="dl-horizontal">
+                        <dt class="text-muted">
+                            @Html.DisplayNameFor(model => model.Title)
+                        </dt>
+                        <dd>
+                            @Html.DisplayFor(model => model.Title)
+                        </dd>
+                    </dl>
+                    <div class="form-group">
+                        <label asp-for="LogoBase64" class="control-label text-muted"></label>
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" accept="image/*" id="img-upload" name="img-upload" required>
+                            <label class="custom-file-label" for="img-upload">Seleccionar imagen</label>
+                            <input type="hidden" name="LogoBase64" id="LogoBase64" />
+                        </div>
+                        <span class="text-danger d-none" id="logo_validate">El logo es requerido</span>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <button type="button" id="btn-save" class="btn btn-outline-primary">Actualizar</button>
+                </div>
+            </div>
+    </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script type="text/javascript">
+        $(document).ready(function (e) {
+
+            $('#btn-save').click(function (e) {
+                var dataUrl = $('#img-preview').attr('src');
+
+                if (!dataUrl) {
+                    $('#logo_validate').removeClass('d-none');
+                } else {
+                    $('#logo_validate').addClass('d-none');
+                    $('#LogoBase64').val(dataUrl);
+                    // Submit
+                    $('#form1').submit();
+                }
+            });
+
+
+            $('.custom-file-input').on('change', function (event) {
+                // Cambiar Label Input file
+                var filename = $(this).val().split('\\')[2];
+                $(this).next('.custom-file-label').html(filename);
+
+                // File y Preview
+                var preview = $('#img-preview')[0];
+                var file = $('#img-upload')[0].files[0];
+
+                var reader = new FileReader();
+                // reader
+                reader.onloadend = function () {
+                    preview.src = reader.result;
+                }
+                if (file) {
+                    // cambiará el preview.src
+                    reader.readAsDataURL(file);
+                    $('#logo_validate').addClass('d-none');
+                    $('#no-image').addClass('d-none');
+                    $('#img-preview').removeClass('d-none');
+                    $('#btn-save').removeClass('disabled');
+                } else {
+                    preview.src = '';
+                    $('#img-preview').addClass('d-none');
+                    $('#logo_validate').removeClass('d-none');
+                    $('#no-image').removeClass('d-none');
+                    $(this).next('.custom-file-label').html('Seleccionar imagen');
+                    $('#btn-save').addClass('disabled');
+                }
+            });
+        });
+    </script>
+}
+

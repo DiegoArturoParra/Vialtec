@@ -1,0 +1,140 @@
+﻿@model Utilitarios.CustomerUser;
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>LogIn</title>
+    <link rel="Shortcut Icon" href="~/vialab.ico" type="image/x-icon" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    @*FontAwesome*@
+    <link rel="stylesheet" href="~/plugins/fontawesome-free/css/all.min.css">
+    @*Animate Css*@
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css" />
+    @*Login Css*@
+    <link rel="stylesheet" href="~/css/login.css" />
+</head>
+<body class="bg-dark">
+    @*Fab Button para notificacion de MaxTransmission Encoladas*@
+    <div class="fab-container" id="fab-container">
+        <div class="fab-icon-holder" id="distributor-login" title="Distribuidor">
+            <i class="fas fa-user-tie"></i>
+            <span class="badge badge-dark" id="fab-counter"></span>
+        </div>
+    </div>
+    <div class="container">
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-5 col-sm-10 col-xs-12">
+                <form asp-action="Login" id="formLogin">
+                    <div class="card mt-4 animate__animated animate__backInDown">
+                        <div class="card-body">
+                            <div class="form-group text-center">
+                                <img id="avatar" src="~/img/av7.jpg" width="80" height="80" class="rounded-circle"
+                                     style="box-shadow: 5px 5px 5px #ccc; cursor: pointer;" />
+                                <h6 class="text-muted mt-3 small">INICIAR SESIÓN</h6>
+                            </div>
+                            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                            <div class="form-group">
+                                <b class="text-muted"><label asp-for="Email" class="control-label"></label></b>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-user-tie"></i>
+                                        </span>
+                                    </div>
+                                    <input asp-for="Email" class="form-control" placeholder="Email:" />
+                                </div>
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <b class="text-muted"><label asp-for="PassKey" class="control-label"></label></b>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-key"></i>
+                                        </span>
+                                    </div>
+                                    <input asp-for="PassKey" class="form-control" placeholder="Contraseña:" />
+                                </div>
+                                <span asp-validation-for="PassKey" class="text-danger"></span>
+                            </div>
+                            <div class="form-group text-center" style="display: none;" id="loading">
+                                <span class="text-muted"><i class="fas fa-spinner fa-2x fa-spin"></i></span>
+                            </div>
+                            <div class="form-group mt-4">
+                                <button type="button"  class="btn btn-block btn-success" id="btn-login" style="box-shadow: 3px 3px 5px #ccc;">INGRESAR</button>
+                            </div>
+                            <div class="form-group text-center">
+                                <a asp-controller="Account" asp-action="PasswordRecovery">¿Olvidaste tu contraseña?</a>
+                            </div>
+                        </div>
+                        <div class="card-footer text-center d-none" id="status">
+                            <i class="fas fa-spinner fa-spin fa-2x"></i>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="~/plugins/jquery/jquery.min.js" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script type="text/javascript">
+
+        $(document).ready(function (e) {
+
+            $('#distributor-login').click(function (e) {
+                window.location.href = "/Admin/Account/Login";
+            });
+
+            $('#btn-login').click(function (e) {
+                const email = $('#Email').val();
+                const password = $('#PassKey').val();
+
+                if (!email || !password) {
+                    Swal.fire('Error', 'Usuario y/o contraseña incorrectos', 'error');
+                    return;
+                } else {
+                     $.ajax({
+                        url: "@Url.Action("ValidateUser", "Account")",
+                         data: {
+                             email,
+                             passKey: password
+                         },
+                        type: "GET"
+                    })
+                    .done(function (validUser) {
+                        if (validUser == true) {
+                            $('#formLogin').submit();
+                        } else {
+                            Swal.fire('Error', 'Usuario y/o contraseña incorrectos', 'error');
+                        }
+                    })
+                    .fail(function (xhr, status, error) {
+                        console.error(error);
+                    });
+                }
+            });
+
+            $(document).ajaxStart(function (e) {
+                $('#status').removeClass('d-none');
+            });
+            $(document).ajaxComplete(function (e) {
+                $('#status').addClass('d-none');
+            });
+        });
+    </script>
+</body>
+</html>

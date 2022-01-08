@@ -1,0 +1,18 @@
+﻿#card-draggable {
+    position: absolute;
+    top: 60px;
+    left: 50px;
+    width: 45%;
+    z-index: 999;
+    border: 2px solid rgba(52, 58, 64, .5);
+    opacity: .6;
+}
+
+#card-draggable:hover {
+    opacity: 1;
+}
+
+#card-draggable:active {
+    border: 2px solid rgba(52, 58, 64, .8);
+    opacity: 1;
+}

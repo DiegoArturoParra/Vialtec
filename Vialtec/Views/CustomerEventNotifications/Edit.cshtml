@@ -1,0 +1,153 @@
+﻿@model Utilitarios.CustomerEventNotification
+
+@{
+    ViewData["Title"] = "Edit";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var emailNotificationProfiles = ViewData["EmailNotificationProfileId"] as List<Utilitarios.EmailNotificationProfile>;
+    var telegramNotificationProfiles = ViewData["TelegramNotificationProfileId"] as List<Utilitarios.TelegramNotificationProfile>;
+}
+
+<br />
+<div class="row justify-content-center">
+    <div class="col-md-8 col-sm-10 col-xs-12">
+        <a class="btn btn-sm btn-outline-info animate__animated animate__backInUp" asp-action="Index">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <form asp-action="Edit" id="form1">
+            <div class="card shadow animate__animated animate__backInDown">
+                <div class="card-header">
+                    <b class="text-muted d-block text-center">Editar Evento de Notificación</b>
+                </div>
+                <div class="card-body row">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" asp-for="CustomerInfoId"/>
+                    <div class="col-md-6 col-sm-12">
+                        <div class="form-group">
+                            <label for="ModelId" class="control-label text-muted">Equipo</label>
+                            <select id="ModelId" class="form-control" asp-items="ViewBag.ModelId"></select>
+                        </div>
+                        <div class="form-group">
+                            <input id="CustomerModelEventIdHidden" type="hidden" value="@Model.CustomerModelEventId" />
+                            <label asp-for="CustomerModelEventId" class="control-label text-muted"></label>
+                            <select asp-for="CustomerModelEventId" class="form-control"></select>
+                            <span asp-validation-for="CustomerModelEventId" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-sm-12">
+                        <div class="form-group">
+                            <label asp-for="EmailNotificationProfileId" class="control-label text-muted"></label>
+                            @*<select asp-for="EmailNotificationProfileId" class="form-control" asp-items="ViewBag.EmailNotificationProfileId"></select>*@
+                            <select class="form-control" id="EmailNotificationProfileId" name="EmailNotificationProfileId">
+                                <option>Ninguno</option>
+                                @foreach (var item in emailNotificationProfiles)
+                                {
+                                    if (Model.EmailNotificationProfileId == item.Id)
+                                    {
+                                        <option value="@item.Id" selected>@item.Title</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.Id">@item.Title</option>
+                                    }
+                                }
+                            </select>
+                            <span asp-validation-for="EmailNotificationProfileId" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="TelegramNotificationProfileId" class="control-label text-muted"></label>
+                            @*<select asp-for="TelegramNotificationProfileId" class="form-control" asp-items="ViewBag.TelegramNotificationProfileId"></select>*@
+                            <select class="form-control" id="TelegramNotificationProfileId" name="TelegramNotificationProfileId">
+                                <option>Ninguno</option>
+                                @foreach (var item in telegramNotificationProfiles)
+                                {
+                                    if (Model.TelegramNotificationProfileId == item.Id)
+                                    {
+                                        <option value="@item.Id" selected>@item.Title</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.Id">@item.Title</option>
+                                    }
+                                }
+                            </select>
+                            <span asp-validation-for="TelegramNotificationProfileId" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-group">
+                            <label asp-for="BodyText" class="control-label text-muted"></label>
+                            <textarea asp-for="BodyText" class="form-control"></textarea>
+                            <span asp-validation-for="BodyText" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <div class="row justify-content-center">
+                        <div class="col-md-6 col-sm-10">
+                            <input type="submit" value="Actualizar" class="btn btn-block btn-outline-info" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script type="text/javascript">
+        $(document).ready(function (e) {
+            $('#form1').submit(function (e) {
+                const emailNotProf = $('#EmailNotificationProfileId').val();
+                const telegramNotProf = $('#TelegramNotificationProfileId').val();
+                if (emailNotProf == 'Ninguno' && telegramNotProf == 'Ninguno') {
+                    e.preventDefault();
+                    Swal.fire('Error', 'Es necesario seleccionar al menos un perfil, ya sea de email o telegram', 'error');
+                }
+
+                const customerModelEventId = $('#CustomerModelEventId').val();
+                if (customerModelEventId === null || customerModelEventId === "-1") {
+                    e.preventDefault();
+                    Swal.fire('Error', 'No se ha seleccionado un evento de equipo', 'error');
+                    $('#CustomerModelEventId').focus();
+                }
+            });
+
+            $('#ModelId').change(function (e) {
+                getCustomerModelEventsByModelId( $(this).val() );
+            });
+
+            getCustomerModelEventsByModelId = (modelId) => {
+                const customerModelEventId = $('#CustomerModelEventIdHidden').val();
+                $.ajax({
+                    url: "@Url.Action("GetCustomerModelEventsByModelId", "CustomerEventNotifications")",
+                    data: {
+                        modelId,
+                        customerModelEventId
+                    },
+                    type: "get"
+                }).done(results => {
+                    $('#CustomerModelEventId option').remove();
+                    if (results.length == 0) {
+                        const emptyOption = `<option value="-1">No se encontraron registros</option>`;
+                        $('#CustomerModelEventId').append(emptyOption);
+                    } else {
+                        results.forEach(item => {
+                            let option;
+                            if (item.id == customerModelEventId) {
+                                option = `<option value="${item.id}" selected>${item.title}</option>`;
+                            } else {
+                                option = `<option value="${item.id}">${item.title}</option>`;
+                            }
+                            $('#CustomerModelEventId').append(option);
+                        });
+                    }
+                }).fail(console.error);
+            }
+
+            // Change inicial
+            getCustomerModelEventsByModelId($('#ModelId').val());
+        });
+    </script>
+}

@@ -1,0 +1,67 @@
+﻿@model Utilitarios.ModelEvent
+
+@{
+    ViewData["Title"] = "Edit";
+    Layout = "~/Areas/SuperAdmin/Views/Shared/_LayoutSuperAdmin.cshtml";
+}
+
+<br />
+<div class="row justify-content-center">
+    <div class="col-md-6 col-sm-8 col-xs-10">
+        <a class="btn btn-sm btn-outline-info animate__animated animate__backInUp" asp-action="Index">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <form asp-action="Edit" id="form1">
+            <div class="card shadow animate__animated animate__backInDown">
+                <div class="card-header">
+                    <b class="text-muted d-block text-center">Nuevo Modelo-Evento</b>
+                </div>
+                <div class="card-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input asp-for="Id" type="hidden" />
+                    <div class="form-group">
+                        <label asp-for="ModelId" class="control-label text-muted"></label>
+                        <select asp-for="ModelId" class="form-control" asp-items="ViewBag.ModelId"></select>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="EventId" class="control-label text-muted"></label>
+                        <select asp-for="EventId" class="form-control" asp-items="ViewBag.EventId"></select>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <div class="row justify-content-center">
+                        <div class="col-md-6 col-sm-10">
+                            <input type="button" id="btn-submit" value="Actualizar" class="btn btn-block btn-outline-info" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script type="text/javascript">
+        $(document).ready(function (e) {
+            $('#btn-submit').click(function (e) {
+                $.ajax({
+                    url: "@Url.Action("VerifyRelationshipUpdate", "ModelEvents")",
+                    data: {
+                        id: $('#Id').val(),
+                        modelId: $('#ModelId').val(),
+                        eventId: $('#EventId').val()
+                    },
+                    type: "get"
+                }).done(exists => {
+                    if (exists) {
+                        Swal.fire('Error', 'Ya existe un registro con el modelo y evento seleccionados', 'error');
+                    } else {
+                        $('#form1').submit();
+                    }
+                }).fail(console.error);
+            });
+        });
+    </script>
+}

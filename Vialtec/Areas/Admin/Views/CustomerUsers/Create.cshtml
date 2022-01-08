@@ -1,0 +1,160 @@
+﻿@model Utilitarios.CustomerUser
+
+@{
+    if (User.IsInRole("Admin"))
+    {
+        Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+    }
+    else if (User.IsInRole("CustomerAdmin"))
+    {
+        Layout = "~/Views/Shared/_Layout.cshtml";
+    }
+    ViewData["Title"] = "Create";
+}
+
+<br />
+<div class="row justify-content-center">
+    <div class="col-md-6 col-sm-8 col-xs-10">
+        <a class="btn btn-sm btn-outline-info animate__animated animate__backInUp" asp-action="Index">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <form asp-action="Create" id="form1">
+            <div class="card shadow animate__animated animate__backInDown">
+                <div class="card-header">
+                    <b class="text-muted d-block text-center">
+                        Nuevo Usuario @if (User.IsInRole("Admin")) { <span>Administrador</span>  }
+                    </b>
+                </div>
+                <div class="card-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <div class="form-group">
+                            <label asp-for="CustomerInfoId" class="control-label text-muted"></label>
+                            <select asp-for="CustomerInfoId" class="form-control" asp-items="ViewBag.CustomerInfoId"></select>
+                        </div>
+                    }
+                    else if (User.IsInRole("CustomerAdmin"))
+                    {
+                        <div class="form-group d-none">
+                            <label asp-for="CustomerInfoId" class="control-label text-muted"></label>
+                            <select asp-for="CustomerInfoId" class="form-control" asp-items="ViewBag.CustomerInfoId"></select>
+                        </div>
+                    }
+                    <div class="form-group">
+                        <label asp-for="Email" class="control-label text-muted"></label>
+                        <input asp-for="Email" class="form-control" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="PassKey" class="control-label text-muted"></label>
+                        <input asp-for="PassKey" class="form-control" />
+                        <span asp-validation-for="PassKey" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <div class="row justify-content-center">
+                        <div class="col-md-6 col-sm-10">
+                            <input id="btn-submit" type="submit" value="Agregar" class="btn btn-block btn-outline-info" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script type="text/javascript">
+        $(document).ready(function (e) {
+
+            var totalOptions = $('#CustomerInfoId option').length;
+            var iterador = 0;
+
+            // Función que descarta a los clientes (customerInfo) que ya tengan un usuario administrador
+            $('#CustomerInfoId option').each(function (e) {
+                $.ajax({
+                    url: "@Url.Action("CustomerInfoWithUserAdmin", "CustomerUsers")",
+                    type: "get",
+                    data: { customerInfoId: $(this).val() }
+                }).then(withUserAdmin => {
+                    // Si el cliente ya tiene un usuario administrador, se elimina del select/option
+                    if (withUserAdmin === true) {
+                        $(this).remove();
+                    }
+                    iterador++;
+
+                    // Fin del each
+                    if (totalOptions === iterador) {
+                        // Si el select se quedo sin options porque todos los clientes tienenn usuario administrador
+                        if ($('#CustomerInfoId option').length === 0) {
+                            // Mensaje para el select option
+                            let emptyOption = `<option value="-1">No hay clientes sin administrador</option>`;
+                            $('#CustomerInfoId').append(emptyOption);
+                            // Deshabilitar el botón submit
+                            //$('#btn-submit').addClass('disabled');
+                        }
+                    }
+                }).fail(console.error);
+            });
+
+            var loadingActive = false;
+
+            // Submit form
+            $('#form1').submit(async function (e) {
+                const email = $('#Email').val().trim();
+                const customerInfoId = $('#CustomerInfoId').val();
+
+                // Verificar que se haya seleccionado un cliente
+                if (customerInfoId == "-1") {
+                    Swal.fire("Error", "El cliente no ha sido seleccionado", "error");
+                    e.preventDefault();
+                    return;
+                }
+
+                $.ajax({
+                    url: "@Url.Action("UniqueEmail", "CustomerUsers")",
+                    data: { email },
+                    type: 'get',
+                    async: false
+                }).done(function (unique) {
+                    if (!unique) {
+                        Swal.fire('Email', `El email <b>${email}</b> ya está siendo utilizado`, 'error');
+                        $('#Email').val('');
+                        e.preventDefault();
+                    }
+                }).fail(function (error) {
+                    console.log(error);
+                    e.preventDefault();
+                });
+            });
+
+            // Consulta al cambiar de cliente en el select
+            $('#CustomerInfoId').change(function (e) {
+                verifyCustomerAdminExists($(this).val());
+            });
+
+            // AJAX loadings
+            $(document).ajaxStart(function (e) {
+                if (e.target.activeElement.id == 'CustomerInfoId') {
+                    loadingActive = true;
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Espere por favor',
+                        text: 'Cargando información',
+                        allowOutsideClick: false
+                    });
+                    Swal.showLoading();
+                }
+            });
+            $(document).ajaxComplete(function (e) {
+                if (loadingActive == true) {
+                    Swal.close();
+                    loadingActive = false;
+                }
+            });
+        });
+    </script>
+}

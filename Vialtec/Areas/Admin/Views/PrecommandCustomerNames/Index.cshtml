@@ -1,0 +1,76 @@
+﻿@model List<IGrouping<Utilitarios.CustomerInfo, Utilitarios.PrecommandCustomerName>>
+
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+    var customerInfos = ViewData["customerInfos"] as List<Utilitarios.CustomerInfo>;
+    var precommands = ViewData["precommands"] as List<Utilitarios.Precommand>;
+}
+
+<br />
+<h5 class="text-muted d-block text-center" style="font-family: 'Century Gothic';">CLIENTES-PRECOMANDOS</h5>
+<hr />
+<div class="row mb-2">
+    <div class="col-md-6 col-sm-12 mb-1">
+        <a asp-action="Create" class="btn btn-sm btn-info">Agregar&nbsp;&nbsp;<i class="fas fa-plus"></i></a>
+        @*<div class="float-right">
+            <a class="btn btn-sm btn-outline-warning" asp-action="Index" data-toggle="tooltip" title="Deshacer filtros">
+                <i class="fas fa-sync"></i>
+            </a>
+        </div>*@
+    </div>
+</div>
+@if (ViewData["emptyMessage"] != null)
+{
+    <div class="container">
+        <div class="alert alert-light">
+            <b class="text-muted">@ViewData["emptyMessage"]</b>
+        </div>
+    </div>
+}
+<div class="row justify-content-center">
+    @foreach (var group in Model)
+    {
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <b class="text-muted">Cliente: </b>
+                    @group.Key.Title
+                </div>
+                <div class="card-body" style="max-height: 200px; min-height: 200px; overflow: auto;">
+                    <table class="table table-sm table-bordered">
+                        <thead class="thead-dark text-center">
+                            <tr>
+                                <th>Modelo de dispositivo</th>
+                                <th>Comando base</th>
+                                <th>Comando cliente</th>
+                                <th colspan="2">Opciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-center">
+                            @foreach (var item in group)
+                            {
+                                <tr>
+                                    <td>@item.Precommand.Model.Title</td>
+                                    <td>@item.Precommand.Title</td>
+                                    <td>@item.CustomerTitle</td>
+                                    <td class="text-center">
+                                        <a class="btn btn-sm btn-primary" asp-action="Edit" asp-route-id="@item.Id">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </td>
+                                    <td class="text-center">
+                                        <a class="btn btn-sm btn-danger" asp-action="Delete" asp-route-id="@item.Id">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer"></div>
+            </div>
+        </div>
+    }
+</div>

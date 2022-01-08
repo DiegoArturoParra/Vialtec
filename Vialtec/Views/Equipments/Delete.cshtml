@@ -1,0 +1,132 @@
+﻿@model Utilitarios.Equipment
+
+@{
+    ViewData["Title"] = "Delete";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<br />
+<div class="row justify-content-center">
+    <div class="col-md-6 col-sm-8 col-xs-12">
+        <a class="btn btn-sm btn-outline-info animate__animated animate__backInUp" asp-action="Index">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div class="card shadow animate__animated animate__backInDown">
+            <div class="card-header">
+                <b class="text-muted d-block text-center">¿Estás seguro de eliminar este dispositivo?</b>
+            </div>
+            <div class="card-body">
+                <div class="row justify-content-center">
+                    <div class="col-md-6 col-sm-10">
+                        <dl class="dl-horizontal">
+                            <dt class="text-muted">
+                                @Html.DisplayNameFor(model => model.EquipmentGroup)
+                            </dt>
+                            <dd>
+                                @Html.DisplayFor(model => model.EquipmentGroup.Title)
+                            </dd>
+                            <dt class="text-muted">
+                                @Html.DisplayNameFor(model => model.Device.Model.Category)
+                            </dt>
+                            <dd>
+                                @Html.DisplayFor(model => model.Device.Model.Category.Title)
+                            </dd>
+                            <dt class="text-muted">
+                                @Html.DisplayNameFor(model => model.Device.Model)
+                            </dt>
+                            <dd>
+                                @Html.DisplayFor(model => model.Device.Model.Title)
+                            </dd>
+                            <dt class="text-muted">
+                                @Html.DisplayNameFor(model => model.NotifyInfo)
+                            </dt>
+                            <dd>
+                                @Html.DisplayFor(model => model.NotifyInfo)
+                            </dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6 col-sm-10">
+                        <dl class="dl-horizontal">
+                            <dt class="text-muted">
+                                @Html.DisplayNameFor(model => model.EquipmentAlias)
+                            </dt>
+                            <dd>
+                                @Html.DisplayFor(model => model.EquipmentAlias)
+                            </dd>
+                            <dt class="text-muted">
+                                @Html.DisplayNameFor(model => model.Description)
+                            </dt>
+                            <dd>
+                                @Html.DisplayFor(model => model.Description)
+                            </dd>
+                            <dt class="text-muted">
+                                @Html.DisplayNameFor(model => model.Device.AssetSerial)
+                            </dt>
+                            <dd>
+                                @Html.DisplayFor(model => model.Device.AssetSerial)
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="row justify-content-center">
+                    <div class="col-md-6 col-sm-8">
+                        <input type="hidden" asp-for="Id" />
+                        <input type="button" value="Eliminar" id="btn-eliminar" class="btn btn-block btn-outline-danger" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script type="text/javascript">
+        $(document).ready(function (e) {
+
+            $(document).ajaxStart(function (e) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Espere por favor',
+                    text: 'Eliminando',
+                    allowOutsideClick: false
+                });
+                Swal.showLoading();
+            });
+            $(document).ajaxComplete(function (e) {
+                Swal.close();
+            });
+            
+            $('#btn-eliminar').click(async (e) => {
+                const result1 = await mensajeConfirmacion('¿Está seguro de borrarlo?', 'Si elimina el dispositivo, es posible que se pierda la información de reportes asociadas a este equipo');
+                if (result1.value) {
+                    const result2 = await mensajeConfirmacion('¿Desea continuar?', 'Confirme que desea borrar el dispositivo, esto eliminará la información histórica y geográfica de reportes');
+                    if (result2.value) {
+                        $.ajax({
+                            url: "@Url.Action("Delete", "Equipments")",
+                            data: $('#Id').val(),
+                            type: "post"
+                        }).done(function (e) {
+                            window.location.href = "@Url.Action("Index", "Equipments")";
+                        });
+                    }
+                }
+            });
+
+            mensajeConfirmacion = (title, text) => {
+                return Swal.fire({
+                    title,
+                    text,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Eliminar',
+                    cancelButtonText: 'Cancelar'
+                });
+            }
+        });
+    </script>
+}

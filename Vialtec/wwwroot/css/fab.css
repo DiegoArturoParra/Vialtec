@@ -1,0 +1,77 @@
+﻿.fab-container{
+    position: fixed;
+    top: 120px;
+    right: 20px;
+    z-index: 999;
+    cursor: pointer;
+}
+.fab-icon-holder {
+    width: 40px;
+    height: 40px;
+    border-radius: 100%;
+    background: #4b4d4b;
+    box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.fab-icon-holder:hover{
+    opacity: 0.8;
+}
+
+.fab-icon-holder i{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-size: 18px;
+    color: #ffffff;
+}
+
+.fab-icon-holder .badge {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    border-radius: 100%;
+}
+
+.fab-main {
+    width: 45px;
+    height: 45px;
+    background: #00695c;
+}
+
+.fab-options{
+    list-style-type: none;
+    margin: 0;
+    position: absolute;
+    top: 45px;
+    right: 0px;
+    opacity: 0;
+    transition: all 0.3s ease;
+    transform: scale(0);
+    transform-origin: 85% bottom;
+
+}
+
+.fab-main:hover + .fab-options, .fab-options:hover{
+    opacity: 1;
+    transform: scale(1);
+}
+
+.fab-options li{
+    display: flex;
+    justify-content: flex-end;
+    padding: 5px;
+}
+
+.fab-label{
+    padding: 2px 5px;
+    align-self: center;
+    user-select: none;
+    white-space: nowrap;
+    border-radius: 3px;
+    font-size: 16px;
+    background: #666666;
+    color: #ffffff;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    margin-right: 10px;
+}

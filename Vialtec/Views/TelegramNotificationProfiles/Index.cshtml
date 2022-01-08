@@ -1,0 +1,106 @@
+﻿@model IEnumerable<Utilitarios.TelegramNotificationProfile>
+
+@using Newtonsoft.Json
+
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<br />
+<h5 class="text-muted d-block text-center" style="font-family: 'Century Gothic';">PERFILES DE NOTIFICACIÓN DE TELEGRAM</h5>
+<hr />
+<div class="container">
+    <a asp-action="Create" class="btn btn-sm btn-info">Agregar&nbsp;&nbsp;<i class="fas fa-plus"></i></a>
+</div>
+
+@if (Model.Count() == 0)
+{
+    <div class="alert alert-light mt-3">
+        No se encontraron registros
+    </div>
+}
+
+    <div class="row mt-3">
+        <input id="bot-access-token" value="@ViewData["bot-access-token"]" type="hidden" />
+        @foreach (var item in Model)
+        {
+            <div class="col-md-6 col-sm-12 mb-2">
+                <div class="card shadow">
+                    <div class="card-body row">
+                        <div class="col border-right">
+                            <b class="text-muted">@item.Title</b>
+                            <p class="card-text">@item.Description</p>
+                        </div>
+                        <div class="col">
+                            @foreach (var chatID in JsonConvert.DeserializeObject<ChatIDS>(item.ChatIDS).Telegram_Chat_Ids)
+                            {
+                                <div class="input-group input-group-sm mb-2">
+                                    <input type="text" class="form-control" readonly value="@chatID">
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-info btn-prueba-chat-id" id="@chatID">Probar</button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="card-footer row justify-content-center">
+                        <div class="col-4">
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-block btn-outline-primary mr-3">Editar</a>
+                        </div>
+                        <div class="col-4">
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-block btn-outline-danger">Eliminar</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+
+@section Scripts{
+    <script type="text/javascript">
+        $(document).ready(function (e) {
+
+            $('.btn-prueba-chat-id').click(function (e) {
+                const chat_id_prueba = $(this).attr('id');
+
+                // Loading para probar 
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Espere por favor',
+                    text: 'Enviando mensaje prueba...',
+                    allowOutsideClick: false
+                });
+                Swal.showLoading();
+                // Enviar mensaje de prueba
+                sendMessageTelegram(chat_id_prueba);
+            });
+
+            sendMessageTelegram = (chat_id) => {
+                $('#tbody-response-chat-id tr').remove();
+
+                const telegramAPI = 'https://api.telegram.org';
+                const bot_access_token = $('#bot-access-token').val();
+                const message = 'Mensaje de prueba para notificaciones grupales';
+
+                if (bot_access_token === '') {
+                    Swal.fire('Warning', 'Lo sentimos, el bot no está en funcionamiento.', 'warning');
+                } else {
+                    // Importante agreagar el - antes de escribir el chat_id
+                    const sendMessageUrl = `${telegramAPI}/bot${bot_access_token}/sendMessage?chat_id=-${chat_id}&text=${message}`;
+                    $.ajax({
+                        url: sendMessageUrl,
+                        data: {},
+                        type: 'get'
+                    }).done(function (response) {
+                        Swal.fire('Hecho!', `El mensaje de prueba ha sido enviado`, 'success');
+                    }).fail(function ({ responseJSON }) {
+                        Swal.fire('Error', responseJSON.description, 'error');
+                    });
+                }
+
+            };
+        });
+    </script>
+}
