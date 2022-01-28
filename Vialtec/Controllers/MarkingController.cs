@@ -21,7 +21,7 @@ namespace Vialtec.Controllers
     public class MarkingController : Controller
     {
         private readonly VialtecContext _context;
-
+        private static List<Reporte> _markings = new List<Reporte>();
         public MarkingController(VialtecContext context)
         {
             _context = context;
@@ -163,6 +163,7 @@ namespace Vialtec.Controllers
 
             return Json(summary);
         }
+        #region Generar excel con datos Clase Reporte
 
         [HttpPost]
         public IActionResult GenerateExcel([FromBody] IEnumerable<Reporte> reporte)
@@ -171,8 +172,9 @@ namespace Vialtec.Controllers
             {
                 if (reporte.ToList().Count > 0)
                 {
-                    HttpContext.Session.SetObject("reporteMarkings", reporte.ToList());
+                    _markings = reporte.ToList();
                 }
+
                 return Json(new { redirect = Url.Action("ExportExcel") });
             }
             catch (Exception ex)
@@ -183,10 +185,8 @@ namespace Vialtec.Controllers
         [HttpGet]
         public IActionResult ExportExcel()
         {
-
-            if (!string.IsNullOrEmpty(HttpContext.Session.GetString("reporteMarkings")))
+            if (_markings.Count > 0)
             {
-                List<Reporte> markings = HttpContext.Session.GetObject<List<Reporte>>("reporteMarkings");
                 // Generando Excel
                 using (var workbook = new XLWorkbook())
                 {
@@ -199,7 +199,7 @@ namespace Vialtec.Controllers
                     worksheet.Cell(currentRow, 4).Value = "Total Metros";
                     worksheet.Cell(currentRow, 5).Value = "Promedio Velocidad";
                     // Data
-                    foreach (var item in markings)
+                    foreach (var item in _markings)
                     {
                         currentRow++;
                         worksheet.Cell(currentRow, 1).Value = item.fechaInicial;
@@ -223,6 +223,7 @@ namespace Vialtec.Controllers
             }
             return NoContent();
         }
+        #endregion
         /// <summary>
         /// Verificar si el customer user tiene acceso a las vistas del controlador
         /// </summary>

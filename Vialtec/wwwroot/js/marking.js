@@ -591,7 +591,6 @@ $(document).ready(function (e) {
         let item;
         var tab = document.getElementById("TableMarking");
         let filas = tab.rows;
-        console.log(filas.length);
         for (var i = 1; i < filas.length; i++) {// recorre las filas de la tabla
             for (var j = 0; j < filas[i].cells.length - 1; j++) {
                 // atraviesa las columnas de cada fila
@@ -603,8 +602,6 @@ $(document).ready(function (e) {
             lista.push(objeto);
         }
         let reporte = JSON.stringify(lista);
-        console.log(reporte);
-
         $.ajax({
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
