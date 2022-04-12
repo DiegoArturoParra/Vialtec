@@ -1,19 +1,18 @@
-﻿using System;
+﻿using ClosedXML.Excel;
 using Datos;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using NpgsqlTypes;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
-using Vialtec.Models;
-using NpgsqlTypes;
-using ClosedXML.Excel;
-using System.IO;
-using System.Collections.Generic;
-using Utilitarios;
 using Vialtec.Helpers;
-using Microsoft.AspNetCore.Http;
+using Vialtec.Models;
 
 namespace Vialtec.Controllers
 {
@@ -21,7 +20,7 @@ namespace Vialtec.Controllers
     public class MarkingController : Controller
     {
         private readonly VialtecContext _context;
-        private static List<Reporte> _markings = new List<Reporte>();
+        private static List<ReportMarking> _markings = new List<ReportMarking>();
         public MarkingController(VialtecContext context)
         {
             _context = context;
@@ -99,15 +98,38 @@ namespace Vialtec.Controllers
             var datetimeInicial = Convert.ToDateTime(filter.DateInitComplete);
             var datetimeFinal = Convert.ToDateTime(filter.DateFinalComplete);
 
-            var markings = from t in _context.Markings
-                           where t.EquipmentId == filter.EquipmentId
-                            && t.DeviceDt >= datetimeInicial && t.DeviceDt <= datetimeFinal
-                            && t.Latitude != null && t.Longitude != null
-                           orderby t.DeviceDt
-                           select t;
+            //var markings = from t in _context.Markings
+            //               where t.EquipmentId == filter.EquipmentId
+            //                && t.DeviceDt >= datetimeInicial && t.DeviceDt <= datetimeFinal
+            //                && t.Latitude != null && t.Longitude != null
+            //               orderby t.DeviceDt
+            //               select t;
+
+            var markings = _context.Markings
+                            .Where(t => t.EquipmentId == filter.EquipmentId && t.DeviceDt >= datetimeInicial && t.DeviceDt <= datetimeFinal
+                            && t.Latitude != null && t.Longitude != null).OrderBy(t => t.DeviceDt).GroupBy(x => x.TrackNumber)
+                            .Select(x => new SummaryMarking
+                            {
+                                SumLeftPaintMeters = FormatDecimal(x.Sum(s => s.LeftPaintMeters)),
+                                SumCenterPaintMeters = FormatDecimal(x.Sum(s => s.CenterPaintMeters)),
+                                SumRightPaintMeters = FormatDecimal(x.Sum(s => s.RightPaintMeters)),
+                                SumMostRightPaintMeters =FormatDecimal(x.Sum(s => s.MostRightPaintMeters)),
+                                FinalDate = FormatDate(x.Max(s => s.DeviceDt)),
+                                InitialDate = FormatDate(x.Min(s => s.DeviceDt)),
+                                TrackNumber = x.Key,
+                            }).ToList();
             return Json(markings);
         }
 
+        private double FormatDecimal(double value)
+        {
+            return Math.Round(value, 2);
+        }
+        private string FormatDate(DateTime value)
+        {
+            return value.ToString("dd/MM/yyyy hh:mm:ss tt",
+                  CultureInfo.InvariantCulture);
+        }
         /// <summary>
         /// Se encarga de retornar el resumen de la actual consulta de demarcación
         /// </summary>
@@ -166,7 +188,7 @@ namespace Vialtec.Controllers
         #region Generar excel con datos Clase Reporte
 
         [HttpPost]
-        public IActionResult GenerateExcel([FromBody] IEnumerable<Reporte> reporte)
+        public IActionResult GenerateExcel([FromBody] IEnumerable<ReportMarking> reporte)
         {
             try
             {
@@ -224,6 +246,8 @@ namespace Vialtec.Controllers
             return NoContent();
         }
         #endregion
+
+
         /// <summary>
         /// Verificar si el customer user tiene acceso a las vistas del controlador
         /// </summary>

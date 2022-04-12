@@ -1,6 +1,8 @@
-﻿using System.Net;
+﻿using System.Linq;
+using System.Net;
 using System.Net.Mail;
 using Api.Models;
+using Datos;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
@@ -9,6 +11,11 @@ namespace Api.Controllers
     [ApiController]
     public class MailController : ControllerBase
     {
+        private readonly VialtecContext _context;
+        public MailController(VialtecContext context)
+        {
+            _context = context;
+        }
         [HttpPost]
         [Route("send")]
         public IActionResult SendEmail(Mail mail)
@@ -34,6 +41,13 @@ namespace Api.Controllers
             client.Send(msg);
 
             return Ok();
+        }
+
+        [HttpGet("markings")]
+        public IActionResult GetMarkings()
+        {
+            var result = _context.Markings.ToList();
+            return Ok(result);
         }
     }
 }

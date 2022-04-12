@@ -14,8 +14,11 @@ namespace Vialtec.Models
         public double SumCenterPaintMeters { get; set; }
         public double SumRightPaintMeters { get; set; }
         public double SumMostRightPaintMeters { get; set; }
+        public string InitialDate { get; set; }
+        public string FinalDate { get; set; }
+        public int TrackNumber { get; set; }
         // Total de metros aplicados
-        public double SumPaintMeters
+        public double SumTotalPaintMeters
         {
             get
             {

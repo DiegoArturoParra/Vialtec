@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Vialtec.Helpers
 {
-    public class Reporte
+    public class ReportMarking
     {
         public string fechaInicial { get; set; }
         public string fechaFinal { get; set; }

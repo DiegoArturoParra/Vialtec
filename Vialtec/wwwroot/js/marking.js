@@ -319,8 +319,9 @@ $(document).ready(function (e) {
             type: "POST"
         }).done(function (results) {
             if (results.length > 0) {
-                showMarkingResults(results);
-
+                console.log(results);
+                //showMarkingResults(results);
+                showReportMarkings(results);
             } else {
                 Swal.fire('Warning', 'No se encontraron resultados para la búsqueda', 'warning');
             }
@@ -328,6 +329,39 @@ $(document).ready(function (e) {
             Swal.fire('Error', error, 'error' + status);
             console.error(error);
         });
+    }
+
+
+    showReportMarkings = (markings) => {
+        markings.forEach((x, index) => {
+            let row = `
+            <tr id="trama-row-${index}">
+                <td class="trama-fecha-inicial">${x.initialDate}</td>
+                <td class="trama-fecha-final">${x.finalDate}</td>
+                <td class="trama-pintura-izquierda">${x.sumLeftPaintMeters}</td>
+                <td class="trama-pintura-Centro">${x.sumCenterPaintMeters}</td>
+                <td class="trama-pintura-Derecha">${x.sumRightPaintMeters}</td>
+                <td class="trama-total-tiempo">${x.totalMinutes}</td>
+                <td class="trama-total-metros">${x.totalMeters}</td>
+                <td class="trama-promedio-velocidad">${x.averageSpeed}</td>
+                <td><input type="checkbox" id="trama-${index}" class="btn-trama" style="cursor: pointer;"/></td>
+            </tr>
+        `;
+            $('#tbody-tramas').append(row);
+        })
+        Swal.close();
+        $('#exampleModal').modal('hide');
+
+        // Mostrar Fab buttons
+        if ($('#fab-container').hasClass('d-none')) {
+            $('#fab-container').removeClass('d-none');
+        }
+
+        // Mostrar Tramas Draggable
+        if ($('#card-draggable').hasClass('d-none')) {
+            $('#card-draggable').removeClass('d-none');
+        }
+        $('#btnExportarExcel').prop("disabled", false);
     }
 
     // Mostrar el reporte de demarcación
@@ -629,53 +663,53 @@ $(document).ready(function (e) {
     });
 
     // Mostra la trama y los marcadores de inicio y final
-    $('#tbody-tramas').on('change', '.btn-trama', function (e) {
-        // Obtener datos para los marcadores de fechas
-        const fechaInicial = $(this).closest('tr').find('.trama-fecha-inicial').html();
-        const fechaFinal = $(this).closest('tr').find('.trama-fecha-final').html();
+    //$('#tbody-tramas').on('change', '.btn-trama', function (e) {
+    //    // Obtener datos para los marcadores de fechas
+    //    const fechaInicial = $(this).closest('tr').find('.trama-fecha-inicial').html();
+    //    const fechaFinal = $(this).closest('tr').find('.trama-fecha-final').html();
 
-        // Obtener el index del botón que sería la posición del polyline
-        const index = $(this).attr('id').split('-')[1];
+    //    // Obtener el index del botón que sería la posición del polyline
+    //    const index = $(this).attr('id').split('-')[1];
 
-        // Obtener si la trama es seleccionada o no
-        const checked = $(this).prop('checked');
+    //    // Obtener si la trama es seleccionada o no
+    //    const checked = $(this).prop('checked');
 
-        // Obtener latitudes y longitudes para los marcadores
-        const latlngInit = polylinesMarking[index]._latlngs[0];
-        const latlngFinal = polylinesMarking[index]._latlngs[polylinesMarking[index]._latlngs.length - 1];
+    //    // Obtener latitudes y longitudes para los marcadores
+    //    const latlngInit = polylinesMarking[index]._latlngs[0];
+    //    const latlngFinal = polylinesMarking[index]._latlngs[polylinesMarking[index]._latlngs.length - 1];
 
-        if (checked) {
-            // Mostrar el polyline
-            polylinesMarking[index].addTo(map);
-            const init = {
-                latitude: latlngInit.lat,
-                longitude: latlngInit.lng,
-                dateInitStr: fechaInicial
-            };
-            const final = {
-                latitude: latlngFinal.lat,
-                longitude: latlngFinal.lng,
-                dateFinalStr: fechaFinal
-            };
-            // Crear los marcadores inicial y final para la trama
-            createMarkersInitFinalCustom(init, final);
-        } else {
-            // Remover la trama del mapa
-            polylinesMarking[index].removeFrom(map);
-            // Remover el marcador inicial y final de la trama
-            markers.forEach(marker => {
-                const { lat, lng } = marker._latlng;
-                if (latlngInit.lat == lat && latlngInit.lng == lng || latlngFinal.lat == lat && latlngFinal.lng == lng) {
-                    map.removeLayer(marker);
-                }
-            });
-        }
-    });
+    //    if (checked) {
+    //        // Mostrar el polyline
+    //        polylinesMarking[index].addTo(map);
+    //        const init = {
+    //            latitude: latlngInit.lat,
+    //            longitude: latlngInit.lng,
+    //            dateInitStr: fechaInicial
+    //        };
+    //        const final = {
+    //            latitude: latlngFinal.lat,
+    //            longitude: latlngFinal.lng,
+    //            dateFinalStr: fechaFinal
+    //        };
+    //        // Crear los marcadores inicial y final para la trama
+    //        createMarkersInitFinalCustom(init, final);
+    //    } else {
+    //        // Remover la trama del mapa
+    //        polylinesMarking[index].removeFrom(map);
+    //        // Remover el marcador inicial y final de la trama
+    //        markers.forEach(marker => {
+    //            const { lat, lng } = marker._latlng;
+    //            if (latlngInit.lat == lat && latlngInit.lng == lng || latlngFinal.lat == lat && latlngFinal.lng == lng) {
+    //                map.removeLayer(marker);
+    //            }
+    //        });
+    //    }
+    //});
 
-    // Ocultar el card draggable de tramas
-    $('#close-tramas').click(function (e) {
-        $('#card-draggable').addClass('d-none');
-    });
+    //// Ocultar el card draggable de tramas
+    //$('#close-tramas').click(function (e) {
+    //    $('#card-draggable').addClass('d-none');
+    //});
 
     // Seleccionar todas las tramas
     $('#checkAll').click(function (e) {

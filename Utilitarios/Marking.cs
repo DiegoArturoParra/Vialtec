@@ -79,5 +79,7 @@ namespace Utilitarios
 
         [Column("gps_odometer")]
         public double GpsOdometer { get; set; }
+        [Column("track_number")]
+        public int TrackNumber { get; set; }
     }
 }

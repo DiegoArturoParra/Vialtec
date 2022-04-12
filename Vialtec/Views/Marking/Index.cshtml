@@ -1,5 +1,4 @@
-﻿
-@{
+﻿@{
     Layout = null;
     var equipmentGroups = ViewData["equipmentGroups"] as List<Utilitarios.EquipmentGroup>;
 }
@@ -43,7 +42,7 @@
 <body>
 
     @*Draggable Card*@
-    <div id="card-draggable" style="width: 55% !important;" class="card d-none">
+    <div id="card-draggable" style="width: 75% !important;" class="card d-none">
         <div class="card-header" style="cursor: pointer;">
             <b class="text-muted">TRAMOS</b>
             <button type="button" id="close-tramas" class="close">
@@ -64,6 +63,9 @@
                     <tr>
                         <th>Fecha inicial</th>
                         <th>Fecha final</th>
+                        <th>Medidor de pintura Izquierda</th>
+                        <th>Medidor de pintura Centro</th>
+                        <th>Medidor de pintura Derecha</th>
                         <th>Tiempo</th>
                         <th>Total metros</th>
                         <th>Promedio velocidad</th>
