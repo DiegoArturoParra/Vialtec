@@ -1,9 +1,12 @@
 ﻿
 class Reporte {
-    constructor(fechaInicial, fechaFinal, tiempo, totalMetros, promedioVelocidad) {
+    constructor(fechaInicial, fechaFinal, leftPaint, centerPaint, rightPaint, tiempo, totalMetros, promedioVelocidad) {
         this.fechaInicial = fechaInicial;
         this.fechaFinal = fechaFinal;
         this.tiempo = tiempo;
+        this.leftPaint = leftPaint;
+        this.centerPaint = centerPaint;
+        this.rightPaint = rightPaint;
         this.totalMetros = totalMetros;
         this.promedioVelocidad = promedioVelocidad;
     }
@@ -631,7 +634,7 @@ $(document).ready(function (e) {
                 item = filas[i].cells[j].innerHTML;
                 data.push(item);
             }
-            let objeto = new Reporte(data[0], data[1], data[2], data[3], data[4]);
+            let objeto = new Reporte(data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
             data.length = 0;
             lista.push(objeto);
         }

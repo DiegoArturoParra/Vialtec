@@ -113,7 +113,7 @@ namespace Vialtec.Controllers
                                 SumLeftPaintMeters = FormatDecimal(x.Sum(s => s.LeftPaintMeters)),
                                 SumCenterPaintMeters = FormatDecimal(x.Sum(s => s.CenterPaintMeters)),
                                 SumRightPaintMeters = FormatDecimal(x.Sum(s => s.RightPaintMeters)),
-                                SumMostRightPaintMeters =FormatDecimal(x.Sum(s => s.MostRightPaintMeters)),
+                                SumMostRightPaintMeters = FormatDecimal(x.Sum(s => s.MostRightPaintMeters)),
                                 FinalDate = FormatDate(x.Max(s => s.DeviceDt)),
                                 InitialDate = FormatDate(x.Min(s => s.DeviceDt)),
                                 TrackNumber = x.Key,
@@ -217,18 +217,24 @@ namespace Vialtec.Controllers
                     // Cabeceros
                     worksheet.Cell(currentRow, 1).Value = "Fecha Inicial";
                     worksheet.Cell(currentRow, 2).Value = "Fecha Final";
-                    worksheet.Cell(currentRow, 3).Value = "Tiempo";
-                    worksheet.Cell(currentRow, 4).Value = "Total Metros";
-                    worksheet.Cell(currentRow, 5).Value = "Promedio Velocidad";
+                    worksheet.Cell(currentRow, 3).Value = "Medidor de pintura Izquierda";
+                    worksheet.Cell(currentRow, 4).Value = "Medidor de pintura Centro";
+                    worksheet.Cell(currentRow, 5).Value = "Medidor de pintura Derecha";
+                    worksheet.Cell(currentRow, 6).Value = "Tiempo";
+                    worksheet.Cell(currentRow, 7).Value = "Total Metros";
+                    worksheet.Cell(currentRow, 8).Value = "Promedio Velocidad";
                     // Data
                     foreach (var item in _markings)
                     {
                         currentRow++;
                         worksheet.Cell(currentRow, 1).Value = item.fechaInicial;
                         worksheet.Cell(currentRow, 2).Value = item.fechaFinal;
-                        worksheet.Cell(currentRow, 3).Value = item.tiempo;
-                        worksheet.Cell(currentRow, 4).Value = item.totalMetros;
-                        worksheet.Cell(currentRow, 5).Value = item.promedioVelocidad;
+                        worksheet.Cell(currentRow, 3).Value = item.leftPaint;
+                        worksheet.Cell(currentRow, 4).Value = item.centerPaint;
+                        worksheet.Cell(currentRow, 5).Value = item.rightPaint;
+                        worksheet.Cell(currentRow, 6).Value = item.tiempo;
+                        worksheet.Cell(currentRow, 7).Value = item.totalMetros;
+                        worksheet.Cell(currentRow, 8).Value = item.promedioVelocidad;
                     }
                     using (var stream = new MemoryStream())
                     {

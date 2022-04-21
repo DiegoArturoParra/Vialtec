@@ -12,6 +12,9 @@ namespace Vialtec.Helpers
         public string tiempo { get; set; }
         public string totalMetros { get; set; }
         public string promedioVelocidad { get; set; }
+        public string leftPaint { get; set; }
+        public string centerPaint { get; set; }
+        public string rightPaint { get; set; }
     }
 
 }
