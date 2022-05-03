@@ -121,6 +121,27 @@ namespace Vialtec.Controllers
             return Json(markings);
         }
 
+
+        /// <summary>
+        /// Se encarga de obtener los registros del reporte de demarcación
+        /// </summary>
+        /// <param name="equipmentId"></param>
+        /// <param name="dateInitComplete"></param>
+        /// <param name="dateFinalComplete"></param>
+        /// <returns></returns>
+        [HttpPost]
+        public JsonResult GetMarkingByTrackNumber(int TrackNumber, DateTime InitialDate, DateTime FinalDate)
+        {
+            var markings = from t in _context.Markings
+                           where t.TrackNumber == TrackNumber
+                            && t.DeviceDt >= InitialDate && t.DeviceDt <= FinalDate
+                            && t.Latitude != null && t.Longitude != null 
+                           orderby t.DeviceDt
+                           select t;              
+            return Json(markings);
+        }
+
+
         private double FormatDecimal(double value)
         {
             return Math.Round(value, 2);
