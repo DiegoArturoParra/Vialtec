@@ -323,7 +323,6 @@ $(document).ready(function (e) {
             type: "POST"
         }).done(function (results) {
             if (results.length > 0) {
-                //showMarkingResults(results);
                 showReportMarkings(results);
             } else {
                 Swal.fire('Warning', 'No se encontraron resultados para la búsqueda', 'warning');
@@ -400,7 +399,6 @@ $(document).ready(function (e) {
         let colorIndex = 0;                    // gris             // naranja // violeta
         let colors = ['blue', 'red', 'green', '#636363', 'purple', '#fa8628', '#ff47af'];
 
-        let tamanioMarkings = markings.length;
         // Array de latitudes y longitudes
         let latLngs = [];
         latLngs.length = 0;
@@ -410,20 +408,11 @@ $(document).ready(function (e) {
             // Guardar el tramo actual y limpiar todo para el nuevo tramo
             // Se almacena el polyline del tramo
             // Almacenar el último polyline
-            if (latLngs.length == tamanioMarkings) {
-                // Almacenar polyline
-                polylinesMarking.push(L.polyline(latLngs, { color: 'black', weight: 5 }));
-            }
-            else {
-                polylinesMarking.push(L.polyline(latLngs, { color: colors[colorIndex], weight: 5 }));
-            }
             // Cambiar de color
             colorIndex++;
             if (colorIndex > 6) colorIndex = 0;
         });
-
-       
-
+        polylinesMarking.push(L.polyline(latLngs, { color: colors[colorIndex], weight: 5 }));
         // Recorrer todos los polylines (tramas) creados para asignar eventos
         polylinesMarking.forEach((polyline, index) => {
             polyline.on('mouseover', function () {
@@ -572,7 +561,7 @@ $(document).ready(function (e) {
         }
     });
 
-     //Mostra la trama y los marcadores de inicio y final
+    //Mostra la trama y los marcadores de inicio y final
     $('#tbody-tramas').on('change', '.btn-trama', function (e) {
         // Obtener datos para los marcadores de fechas
         const fechaInicial = $(this).closest('tr').find('.trama-fecha-inicial').html();

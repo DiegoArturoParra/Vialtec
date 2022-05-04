@@ -107,7 +107,7 @@ namespace Vialtec.Controllers
 
             var markings = _context.Markings
                             .Where(t => t.EquipmentId == filter.EquipmentId && t.DeviceDt >= datetimeInicial && t.DeviceDt <= datetimeFinal
-                            && t.Latitude != null && t.Longitude != null).OrderBy(t => t.DeviceDt).GroupBy(x => x.TrackNumber)
+                            && t.Latitude != null && t.Longitude != null && t.TrackNumber > 5).GroupBy(x => x.TrackNumber).OrderBy(x => x.Min(s => s.DeviceDt))
                             .Select(x => new SummaryMarking
                             {
                                 SumLeftPaintMeters = FormatDecimal(x.Sum(s => s.LeftPaintMeters)),
@@ -123,21 +123,21 @@ namespace Vialtec.Controllers
 
 
         /// <summary>
-        /// Se encarga de obtener los registros del reporte de demarcación
+        /// 
         /// </summary>
-        /// <param name="equipmentId"></param>
-        /// <param name="dateInitComplete"></param>
-        /// <param name="dateFinalComplete"></param>
+        /// <param name="TrackNumber"></param>
+        /// <param name="InitialDate"></param>
+        /// <param name="FinalDate"></param>
         /// <returns></returns>
         [HttpPost]
         public JsonResult GetMarkingByTrackNumber(int TrackNumber, DateTime InitialDate, DateTime FinalDate)
         {
-            var markings = from t in _context.Markings
-                           where t.TrackNumber == TrackNumber
-                            && t.DeviceDt >= InitialDate && t.DeviceDt <= FinalDate
-                            && t.Latitude != null && t.Longitude != null 
-                           orderby t.DeviceDt
-                           select t;              
+            var markings = (from t in _context.Markings
+                            where t.TrackNumber == TrackNumber
+                             && t.DeviceDt >= InitialDate && t.DeviceDt <= FinalDate
+                             && t.Latitude != null && t.Longitude != null
+                            orderby t.DeviceDt
+                            select new { t.Latitude, t.Longitude, t.DeviceDt, t.TrackNumber }).ToList();
             return Json(markings);
         }
 
