@@ -13,7 +13,6 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Vialtec.Helpers;
 using Vialtec.Models;
-
 namespace Vialtec.Controllers
 {
     [Authorize(Roles = "Customer,CustomerAdmin")]
@@ -95,6 +94,10 @@ namespace Vialtec.Controllers
         [HttpPost]
         public JsonResult GetMarkingResults(MarkingFilter filter)
         {
+            TotalSummaryMarking totales = new TotalSummaryMarking();
+
+            Dictionary<string, object> diccionario = new Dictionary<string, object>();
+
             var datetimeInicial = Convert.ToDateTime(filter.DateInitComplete);
             var datetimeFinal = Convert.ToDateTime(filter.DateFinalComplete);
 
@@ -107,18 +110,32 @@ namespace Vialtec.Controllers
 
             var markings = _context.Markings
                             .Where(t => t.EquipmentId == filter.EquipmentId && t.DeviceDt >= datetimeInicial && t.DeviceDt <= datetimeFinal
-                            && t.Latitude != null && t.Longitude != null && t.TrackNumber > 5).GroupBy(x => x.TrackNumber).OrderBy(x => x.Min(s => s.DeviceDt))
+                            && t.Latitude != null && t.Longitude != null && t.TrackNumber != -1).GroupBy(x => x.TrackNumber).OrderBy(x => x.Min(s => s.DeviceDt))
                             .Select(x => new SummaryMarking
                             {
                                 SumLeftPaintMeters = FormatDecimal(x.Sum(s => s.LeftPaintMeters)),
                                 SumCenterPaintMeters = FormatDecimal(x.Sum(s => s.CenterPaintMeters)),
                                 SumRightPaintMeters = FormatDecimal(x.Sum(s => s.RightPaintMeters)),
-                                SumMostRightPaintMeters = FormatDecimal(x.Sum(s => s.MostRightPaintMeters)),
-                                FinalDate = FormatDate(x.Max(s => s.DeviceDt)),
-                                InitialDate = FormatDate(x.Min(s => s.DeviceDt)),
+                                FinalDate = x.Max(s => s.DeviceDt),
+                                InitialDate = x.Min(s => s.DeviceDt),
                                 TrackNumber = x.Key,
                             }).ToList();
-            return Json(markings);
+
+            if (markings.Count > 0)
+            {
+                totales.TotalLeftPaintMeters = markings.Sum(x => x.SumLeftPaintMeters);
+                totales.TotalCenterPaintMeters = markings.Sum(x => x.SumCenterPaintMeters);
+                totales.TotalRightPaintMeters = markings.Sum(x => x.SumRightPaintMeters);
+                totales.InitialDateRoute = markings.Min(x => x.InitialDate);
+                totales.FinalDateRoute = markings.Max(x => x.FinalDate);
+
+                diccionario.Add("markings", markings);
+                diccionario.Add("totales", totales);
+                diccionario.Add("valido", true);
+                return Json(diccionario);
+            }
+            diccionario.Add("valido", false);
+            return Json(diccionario);
         }
 
 
@@ -130,11 +147,13 @@ namespace Vialtec.Controllers
         /// <param name="FinalDate"></param>
         /// <returns></returns>
         [HttpPost]
-        public JsonResult GetMarkingByTrackNumber(int TrackNumber, DateTime InitialDate, DateTime FinalDate)
+        public JsonResult GetMarkingByTrackNumber(MarkingMapFilter markingMapFilter)
         {
+            DateTime final = DateTime.Parse(markingMapFilter.FinalDate);
+            DateTime inicial = DateTime.Parse(markingMapFilter.InitialDate);
             var markings = (from t in _context.Markings
-                            where t.TrackNumber == TrackNumber
-                             && t.DeviceDt >= InitialDate && t.DeviceDt <= FinalDate
+                            where t.TrackNumber == markingMapFilter.TrackNumber
+                             && t.DeviceDt >= inicial && t.DeviceDt <= final
                              && t.Latitude != null && t.Longitude != null
                             orderby t.DeviceDt
                             select new { t.Latitude, t.Longitude, t.DeviceDt, t.TrackNumber }).ToList();
@@ -194,10 +213,6 @@ namespace Vialtec.Controllers
                             SumLeftPaintMeters = Convert.ToDouble(results[0]),
                             SumCenterPaintMeters = Convert.ToDouble(results[1]),
                             SumRightPaintMeters = Convert.ToDouble(results[2]),
-                            SumMostRightPaintMeters = Convert.ToDouble(results[3]),
-                            AverageSpeed = Convert.ToDouble(results[4]),
-                            TotalMeters = Convert.ToDouble(results[5]),
-                            TotalSeconds = Convert.ToDouble(results[6])
                         };
                     }
                     #endregion
@@ -241,9 +256,8 @@ namespace Vialtec.Controllers
                     worksheet.Cell(currentRow, 3).Value = "Medidor de pintura Izquierda";
                     worksheet.Cell(currentRow, 4).Value = "Medidor de pintura Centro";
                     worksheet.Cell(currentRow, 5).Value = "Medidor de pintura Derecha";
-                    worksheet.Cell(currentRow, 6).Value = "Tiempo";
-                    worksheet.Cell(currentRow, 7).Value = "Total Metros";
-                    worksheet.Cell(currentRow, 8).Value = "Promedio Velocidad";
+                    worksheet.Cell(currentRow, 6).Value = "Total Metros";
+                    worksheet.Cell(currentRow, 7).Value = "Tiempo";
                     // Data
                     foreach (var item in _markings)
                     {
@@ -253,9 +267,8 @@ namespace Vialtec.Controllers
                         worksheet.Cell(currentRow, 3).Value = item.leftPaint;
                         worksheet.Cell(currentRow, 4).Value = item.centerPaint;
                         worksheet.Cell(currentRow, 5).Value = item.rightPaint;
-                        worksheet.Cell(currentRow, 6).Value = item.tiempo;
-                        worksheet.Cell(currentRow, 7).Value = item.totalMetros;
-                        worksheet.Cell(currentRow, 8).Value = item.promedioVelocidad;
+                        worksheet.Cell(currentRow, 6).Value = item.totalMetros;
+                        worksheet.Cell(currentRow, 7).Value = item.tiempo;
                     }
                     using (var stream = new MemoryStream())
                     {

@@ -7,34 +7,65 @@ namespace Vialtec.Models
 {
     public class SummaryMarking
     {
-        // Velocidad promedio
-        public double AverageSpeed { get; set; }
+
+
         // Metros aplicados
         public double SumLeftPaintMeters { get; set; }
         public double SumCenterPaintMeters { get; set; }
         public double SumRightPaintMeters { get; set; }
-        public double SumMostRightPaintMeters { get; set; }
-        public string InitialDate { get; set; }
-        public string FinalDate { get; set; }
+        public DateTime InitialDate { get; set; }
+        public DateTime FinalDate { get; set; }
         public int TrackNumber { get; set; }
-        // Total de metros aplicados
-        public double SumTotalPaintMeters
+
+
+        public double TotalMeters
         {
             get
             {
-                return SumLeftPaintMeters + SumCenterPaintMeters + SumRightPaintMeters + SumMostRightPaintMeters;
+                return SumLeftPaintMeters + SumCenterPaintMeters + SumRightPaintMeters;
             }
         }
-        // Total de metros
-        public double TotalMeters { get; set; }
-        // Total de segundos
-        public double TotalSeconds { get; set; }
         // Total de minutos
-        public double TotalMinutes
+        public string TotalMinutes
         {
             get
             {
-                return TotalSeconds / 60;
+                return $"{(FinalDate - InitialDate).TotalMinutes} Minutos";
+            }
+        }
+    }
+
+    public class TotalSummaryMarking
+    {
+        // Total de metros pintados en la izquierda
+        public double TotalLeftPaintMeters { get; set; }
+
+        // Total de metros pintados en el centro
+        public double TotalCenterPaintMeters { get; set; }
+
+        // Total de metros pintados en la derecha   
+        public double TotalRightPaintMeters { get; set; }
+
+        //Fecha Incial del reccorrido
+        public DateTime InitialDateRoute { get; set; }
+
+        // Total de metros pintados en la derecha   
+        public DateTime FinalDateRoute { get; set; }
+
+        // Total de metros pintados
+        public double TotalPaintMetersRoute
+        {
+            get
+            {
+                return TotalLeftPaintMeters + TotalCenterPaintMeters + TotalRightPaintMeters;
+            }
+        }
+        // Total de minutos recorridos
+        public string TotalMinutesRoute
+        {
+            get
+            {
+                return $"{(FinalDateRoute - InitialDateRoute).TotalMinutes} Minutos";
             }
         }
     }

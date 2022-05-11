@@ -1,6 +1,6 @@
 ﻿
 class Reporte {
-    constructor(fechaInicial, fechaFinal, leftPaint, centerPaint, rightPaint, tiempo, totalMetros, promedioVelocidad) {
+    constructor(fechaInicial, fechaFinal, leftPaint, centerPaint, rightPaint, totalMetros, tiempo) {
         this.fechaInicial = fechaInicial;
         this.fechaFinal = fechaFinal;
         this.tiempo = tiempo;
@@ -8,7 +8,6 @@ class Reporte {
         this.centerPaint = centerPaint;
         this.rightPaint = rightPaint;
         this.totalMetros = totalMetros;
-        this.promedioVelocidad = promedioVelocidad;
     }
 }
 
@@ -29,7 +28,6 @@ $(document).ready(function (e) {
     var polylinesMarking = []; // Demarcación
     // Markers
     var markers = [];
-    let markingsByTrackNumber = [];
     // Arreglo de Promesas que contendran los resumenes de las tramas (demarcación)
     summaryPromises = [];
 
@@ -322,9 +320,20 @@ $(document).ready(function (e) {
             dataType: "json",
             type: "POST"
         }).done(function (results) {
-            if (results.length > 0) {
-                showReportMarkings(results);
-            } else {
+            if (results.valido) {
+                let markingsListado = [];
+                let totales;
+                if (results.markings.length > 0) {
+                    markingsListado = results.markings;
+                }
+                if (results.totales != null) {
+                    totales = results.totales;
+                }
+                if (markingsListado.length > 0) {
+                    showReportMarkings(markingsListado, totales);
+                }
+            }
+            else {
                 Swal.fire('Warning', 'No se encontraron resultados para la búsqueda', 'warning');
             }
         }).fail(function (xhr, status, error) {
@@ -334,17 +343,13 @@ $(document).ready(function (e) {
     }
 
 
-    showReportMarkings = (markings) => {
+    showReportMarkings = (markings, totales) => {
         // Limpiar mapa IMPORTANTE: Limpiar antes de vaciar polylinesMarking
         clearMap();
-
         // Vaciar array de polylines
         polylinesMarking.length = 0;
-
         // Limpiar tabla de tramas
         $('#tbody-tramas tr').remove();
-
-        markingsByTrackNumber.length = 0;
         markings.forEach((x, index) => {
             let row = `
             <tr id="trama-row-${index}">
@@ -353,12 +358,10 @@ $(document).ready(function (e) {
                 <td class="trama-pintura-izquierda">${x.sumLeftPaintMeters}</td>
                 <td class="trama-pintura-Centro">${x.sumCenterPaintMeters}</td>
                 <td class="trama-pintura-Derecha">${x.sumRightPaintMeters}</td>
-                <td class="trama-total-tiempo">${x.totalMinutes}</td>
                 <td class="trama-total-metros">${x.totalMeters}</td>
-                <td class="trama-promedio-velocidad">${x.averageSpeed}</td>
+                <td class="trama-total-tiempo">${x.totalMinutes}</td>
                 <td><input type="checkbox" id="trama-${index}" class="btn-trama" style="cursor: pointer;"/></td>
-            </tr>
-        `;
+            </tr> `;
             $('#tbody-tramas').append(row);
 
             let datos = { InitialDate: x.initialDate, FinalDate: x.finalDate, TrackNumber: x.trackNumber }
@@ -369,7 +372,7 @@ $(document).ready(function (e) {
                 type: "POST"
             }).done(function (results) {
                 if (results.length > 0) {
-                    showMarkingResults(results);
+                    showMarkingInMap(results);
                 } else {
                     Swal.fire('Warning', 'No se encontraron resultados para la búsqueda', 'warning');
                 }
@@ -378,6 +381,25 @@ $(document).ready(function (e) {
                 console.error(error);
             });
         })
+
+        let rowDescription = `
+            <tr id="description">
+                <td><i class="fa fa-calculator mr-2" aria-hidden="true"></i><strong>TOTALES</strong></td>
+            </tr> `;
+        $('#tbody-tramas').append(rowDescription);
+
+        let rowTotales = `
+            <tr id="trama-row-totales">
+                <td class="total-trama-fecha-inicial">${totales.initialDateRoute}</td>
+                <td class="total-trama-fecha-final">${totales.finalDateRoute}</td>
+                <td class="total-trama-pintura-izquierda">${totales.totalLeftPaintMeters}</td>
+                <td class="total-trama-pintura-Centro">${totales.totalCenterPaintMeters}</td>
+                <td class="total-trama-pintura-Derecha">${totales.totalRightPaintMeters}</td>
+                <td class="total-trama-total-metros">${totales.totalPaintMetersRoute}</td>
+                <td class="total-trama-total-tiempo">${totales.totalMinutesRoute}</td>
+            </tr> `;
+        $('#tbody-tramas').append(rowTotales);
+
         Swal.close();
         $('#exampleModal').modal('hide');
 
@@ -394,7 +416,7 @@ $(document).ready(function (e) {
     }
 
     // Mostrar el reporte de demarcación
-    showMarkingResults = (markings) => {
+    showMarkingInMap = (markings) => {
         // Colors
         let colorIndex = 0;                    // gris             // naranja // violeta
         let colors = ['blue', 'red', 'green', '#636363', 'purple', '#fa8628', '#ff47af'];
@@ -444,15 +466,15 @@ $(document).ready(function (e) {
         summaryPromises.push(obtenerResumenTrama(equipmentId, fechaInicial, fechaFinal));
 
         let row = `
-            <tr id="trama-row-${index}">
+            < tr id = "trama-row-${index}" >
                 <td class="trama-fecha-inicial">${fechaInicial}</td>
                 <td class="trama-fecha-final">${fechaFinal}</td>
                 <td class="trama-tiempo">Loading...</td>
                 <td class="trama-total-metros">Loading...</td>
                 <td class="trama-promedio-velocidad">Loading...</td>
                 <td><input type="checkbox" id="trama-${index}" class="btn-trama" style="cursor: pointer;"/></td>
-            </tr>
-        `;
+            </tr >
+            `;
         $('#tbody-tramas').append(row);
     }
 
@@ -505,7 +527,7 @@ $(document).ready(function (e) {
             // Asignar los valores a los campos correspondientes del resumen
             Object.keys(summary).forEach(key => {
                 const value = number_format(summary[key], 2);
-                $(`#${key}`).html(value);
+                $(`#${key} `).html(value);
             });
 
             // Mostrar modal
@@ -524,13 +546,13 @@ $(document).ready(function (e) {
         let item;
         var tab = document.getElementById("TableMarking");
         let filas = tab.rows;
-        for (var i = 1; i < filas.length; i++) {// recorre las filas de la tabla
+        for (var i = 1; i < filas.length - 2; i++) {// recorre las filas de la tabla
             for (var j = 0; j < filas[i].cells.length - 1; j++) {
                 // atraviesa las columnas de cada fila
                 item = filas[i].cells[j].innerHTML;
                 data.push(item);
             }
-            let objeto = new Reporte(data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
+            let objeto = new Reporte(data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
             data.length = 0;
             lista.push(objeto);
         }
