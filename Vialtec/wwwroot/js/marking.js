@@ -44,7 +44,7 @@ $(document).ready(function (e) {
     // -------------------------------------------------------------------------------------------------------
 
     // EQUIPMENT_GROUPS Y EQUIPMENTS -------------------------------------------------------------------------------
-    var filters;
+    let filters;
 
     // Equipments del EquipmentGroup inicial del select
     getEquipments($('#equipmentGroupId').val());
@@ -118,11 +118,19 @@ $(document).ready(function (e) {
         var radioButtonsOptions = $('input[name=exampleRadios]');
         var typeSelected = radioButtonsOptions.filter(":checked").val(); //traslado | demarcado | ambos
 
+
+        const chkMinMeters = $('#chkMinMeters').prop('checked');
+        let minMeters = 0;
+        if (chkMinMeters) {
+            minMeters = $('#minMeters').val();
+        }
+
         // Definir los filtros
         filters = {
             equipmentId,
             dateInitComplete: datetime_inicial,
-            dateFinalComplete: datetime_final
+            dateFinalComplete: datetime_final,
+            ignoredMeters: minMeters
         };
 
         $('#checkAll').prop('checked', false);
@@ -130,6 +138,7 @@ $(document).ready(function (e) {
         if (typeSelected === 'traslado') {
             loadTransmissionsInfo();
         } else if (typeSelected === 'demarcado') {
+
             loadMarkingResults();
         }
     });
@@ -162,7 +171,7 @@ $(document).ready(function (e) {
         }
         // Remover el actual polyline de demarcado
         if (polylinesMarking.length > 0) {
-            polylinesMarking.forEach(x => {
+            polylinesMarking.forEach((x, index) => {
                 x.removeFrom(map);
             });
         }
@@ -321,17 +330,7 @@ $(document).ready(function (e) {
             type: "POST"
         }).done(function (results) {
             if (results.valido) {
-                let markingsListado = [];
-                let totales;
-                if (results.markings.length > 0) {
-                    markingsListado = results.markings;
-                }
-                if (results.totales != null) {
-                    totales = results.totales;
-                }
-                if (markingsListado.length > 0) {
-                    showReportMarkings(markingsListado, totales);
-                }
+                showReportMarkings(results.markings, results.totales);
             }
             else {
                 Swal.fire('Warning', 'No se encontraron resultados para la búsqueda', 'warning');
@@ -347,19 +346,20 @@ $(document).ready(function (e) {
         // Limpiar mapa IMPORTANTE: Limpiar antes de vaciar polylinesMarking
         clearMap();
         // Vaciar array de polylines
-        polylinesMarking.length = 0;
+        polylinesMarking = [];
         // Limpiar tabla de tramas
         $('#tbody-tramas tr').remove();
+
         markings.forEach((x, index) => {
             let row = `
             <tr id="trama-row-${index}">
-                <td class="trama-fecha-inicial">${x.initialDate}</td>
-                <td class="trama-fecha-final">${x.finalDate}</td>
+                <td class="trama-fecha-inicial">${formatAMPM(x.initialDate)}</td>
+                <td class="trama-fecha-final">${formatAMPM(x.finalDate)}</td>
                 <td class="trama-pintura-izquierda">${x.sumLeftPaintMeters}</td>
                 <td class="trama-pintura-Centro">${x.sumCenterPaintMeters}</td>
                 <td class="trama-pintura-Derecha">${x.sumRightPaintMeters}</td>
-                <td class="trama-total-metros">${x.totalMeters}</td>
-                <td class="trama-total-tiempo">${x.totalMinutes}</td>
+                <td class="trama-total-metros">${number_format(x.totalMeters, 2)}</td>
+                <td class="trama-total-tiempo">${number_format(x.totalMinutes, 2)} min</td>
                 <td><input type="checkbox" id="trama-${index}" class="btn-trama" style="cursor: pointer;"/></td>
             </tr> `;
             $('#tbody-tramas').append(row);
@@ -372,7 +372,7 @@ $(document).ready(function (e) {
                 type: "POST"
             }).done(function (results) {
                 if (results.length > 0) {
-                    showMarkingInMap(results);
+                    showMarkingInMap(results, index);
                 } else {
                     Swal.fire('Warning', 'No se encontraron resultados para la búsqueda', 'warning');
                 }
@@ -390,13 +390,13 @@ $(document).ready(function (e) {
 
         let rowTotales = `
             <tr id="trama-row-totales">
-                <td class="total-trama-fecha-inicial">${totales.initialDateRoute}</td>
-                <td class="total-trama-fecha-final">${totales.finalDateRoute}</td>
+                <td class="total-trama-fecha-inicial">${formatAMPM(totales.initialDateRoute)}</td>
+                <td class="total-trama-fecha-final">${formatAMPM(totales.finalDateRoute)}</td>
                 <td class="total-trama-pintura-izquierda">${totales.totalLeftPaintMeters}</td>
                 <td class="total-trama-pintura-Centro">${totales.totalCenterPaintMeters}</td>
                 <td class="total-trama-pintura-Derecha">${totales.totalRightPaintMeters}</td>
-                <td class="total-trama-total-metros">${totales.totalPaintMetersRoute}</td>
-                <td class="total-trama-total-tiempo">${totales.totalMinutesRoute}</td>
+                <td class="total-trama-total-metros">${number_format(totales.totalPaintMetersRoute, 2)}</td>
+                <td class="total-trama-total-tiempo">${number_format(totales.totalMinutesRoute, 2)} min</td>
             </tr> `;
         $('#tbody-tramas').append(rowTotales);
 
@@ -416,16 +416,15 @@ $(document).ready(function (e) {
     }
 
     // Mostrar el reporte de demarcación
-    showMarkingInMap = (markings) => {
+    showMarkingInMap = (results, index) => {
         // Colors
         let colorIndex = 0;                    // gris             // naranja // violeta
         let colors = ['blue', 'red', 'green', '#636363', 'purple', '#fa8628', '#ff47af'];
 
         // Array de latitudes y longitudes
         let latLngs = [];
-        latLngs.length = 0;
         // For each
-        markings.forEach(async x => {
+        results.forEach(x => {
             latLngs.push([x.latitude, x.longitude]);
             // Guardar el tramo actual y limpiar todo para el nuevo tramo
             // Se almacena el polyline del tramo
@@ -434,63 +433,65 @@ $(document).ready(function (e) {
             colorIndex++;
             if (colorIndex > 6) colorIndex = 0;
         });
-        polylinesMarking.push(L.polyline(latLngs, { color: colors[colorIndex], weight: 5 }));
+
+        polylinesMarking.splice(index, 0, L.polyline(latLngs, { color: colors[colorIndex], weight: 5 }));
         // Recorrer todos los polylines (tramas) creados para asignar eventos
         polylinesMarking.forEach((polyline, index) => {
-            polyline.on('mouseover', function () {
-                polyline.setStyle({ weight: 8 });
-            });
-            polyline.on('mouseout', function () {
-                polyline.setStyle({ weight: 5 });
-            });
-            polyline.on('click', function () {
-                // console.log({ polyline, dateInfo: datesInitAndFinal[index] });
-                const equipmentId = $('#equipmentId').val();
-                // Cargar el resumen para la trama seleccionada
-                // loadSummaryQuery(equipmentId, datesInitAndFinal[index].dateInit, datesInitAndFinal[index].dateFinal);
-            });
+            if (index != 0) {
+                polyline.on('mouseover', function () {
+                    polyline.setStyle({ weight: 8 });
+                });
+                polyline.on('mouseout', function () {
+                    polyline.setStyle({ weight: 5 });
+                });
+                polyline.on('click', function () {
+                    // console.log({ polyline, dateInfo: datesInitAndFinal[index] });
+                    const equipmentId = $('#equipmentId').val();
+                    // Cargar el resumen para la trama seleccionada
+                    // loadSummaryQuery(equipmentId, datesInitAndFinal[index].dateInit, datesInitAndFinal[index].dateFinal);
+                });
+            }
         });
-
         // Zoom the map to the polylines de demarcado
         var group = new L.featureGroup(polylinesMarking);
         map.fitBounds(group.getBounds());
     }
 
     // Agregar nueva fila a la tabla de tramas
-    agregarTrama = async (init, final, index) => {
-        const equipmentId = $('#equipmentId').val();
-        const fechaInicial = init.deviceDt.replace('T', ' ').split('.')[0];
-        const fechaFinal = final.deviceDt.replace('T', ' ').split('.')[0];
+    //agregarTrama = async (init, final, index) => {
+    //    const equipmentId = $('#equipmentId').val();
+    //    const fechaInicial = init.deviceDt.replace('T', ' ').split('.')[0];
+    //    const fechaFinal = final.deviceDt.replace('T', ' ').split('.')[0];
 
-        // Obtener la promesa de resumen de la trama (total metros y promedio velocidad)
-        summaryPromises.push(obtenerResumenTrama(equipmentId, fechaInicial, fechaFinal));
+    //    // Obtener la promesa de resumen de la trama (total metros y promedio velocidad)
+    //    summaryPromises.push(obtenerResumenTrama(equipmentId, fechaInicial, fechaFinal));
 
-        let row = `
-            < tr id = "trama-row-${index}" >
-                <td class="trama-fecha-inicial">${fechaInicial}</td>
-                <td class="trama-fecha-final">${fechaFinal}</td>
-                <td class="trama-tiempo">Loading...</td>
-                <td class="trama-total-metros">Loading...</td>
-                <td class="trama-promedio-velocidad">Loading...</td>
-                <td><input type="checkbox" id="trama-${index}" class="btn-trama" style="cursor: pointer;"/></td>
-            </tr >
-            `;
-        $('#tbody-tramas').append(row);
-    }
+    //    let row = `
+    //        < tr id = "trama-row-${index}" >
+    //            <td class="trama-fecha-inicial">${fechaInicial}</td>
+    //            <td class="trama-fecha-final">${fechaFinal}</td>
+    //            <td class="trama-tiempo">Loading...</td>
+    //            <td class="trama-total-metros">Loading...</td>
+    //            <td class="trama-promedio-velocidad">Loading...</td>
+    //            <td><input type="checkbox" id="trama-${index + 1}" class="btn-trama" style="cursor: pointer;"/></td>
+    //        </tr >
+    //        `;
+    //    $('#tbody-tramas').append(row);
+    //}
 
-    // Obtener el total de metros y el promedio de velocidad
-    obtenerResumenTrama = (equipmentId, dateInit, dateFinal) => {
-        return $.ajax({
-            url: "/Marking/GetSummaryQuery",
-            data: {
-                equipmentId,
-                dateInitComplete: dateInit,
-                dateFinalComplete: dateFinal
-            },
-            dataType: "json",
-            type: "POST"
-        });
-    }
+    //// Obtener el total de metros y el promedio de velocidad
+    //obtenerResumenTrama = (equipmentId, dateInit, dateFinal) => {
+    //    return $.ajax({
+    //        url: "/Marking/GetSummaryQuery",
+    //        data: {
+    //            equipmentId,
+    //            dateInitComplete: dateInit,
+    //            dateFinalComplete: dateFinal
+    //        },
+    //        dataType: "json",
+    //        type: "POST"
+    //    });
+    //}
     // ***
 
     // Mostrar el resumen en el modal
@@ -502,41 +503,41 @@ $(document).ready(function (e) {
         loadSummaryQuery(equipmentId, dateInit, dateFinal);
     });
 
-    // Realizar la consulta para el resumen de demarcación
-    loadSummaryQuery = (equipmentId, dateInit, dateFinal) => {
-        Swal.fire({
-            icon: 'info',
-            title: 'Espere por favor',
-            text: 'Cargando información',
-            allowOutsideClick: false
-        });
-        Swal.showLoading();
+    //// Realizar la consulta para el resumen de demarcación
+    //loadSummaryQuery = (equipmentId, dateInit, dateFinal) => {
+    //    Swal.fire({
+    //        icon: 'info',
+    //        title: 'Espere por favor',
+    //        text: 'Cargando información',
+    //        allowOutsideClick: false
+    //    });
+    //    Swal.showLoading();
 
-        $.ajax({
-            url: "/Marking/GetSummaryQuery",
-            data: {
-                equipmentId,
-                dateInitComplete: dateInit,
-                dateFinalComplete: dateFinal
-            },
-            dataType: "json",
-            type: "POST"
-        }).then(summary => {
-            // Cerrar loading
-            Swal.close();
-            // Asignar los valores a los campos correspondientes del resumen
-            Object.keys(summary).forEach(key => {
-                const value = number_format(summary[key], 2);
-                $(`#${key} `).html(value);
-            });
+    //    $.ajax({
+    //        url: "/Marking/GetSummaryQuery",
+    //        data: {
+    //            equipmentId,
+    //            dateInitComplete: dateInit,
+    //            dateFinalComplete: dateFinal
+    //        },
+    //        dataType: "json",
+    //        type: "POST"
+    //    }).then(summary => {
+    //        // Cerrar loading
+    //        Swal.close();
+    //        // Asignar los valores a los campos correspondientes del resumen
+    //        Object.keys(summary).forEach(key => {
+    //            const value = number_format(summary[key], 2);
+    //            $(`#${key} `).html(value);
+    //        });
 
-            // Mostrar modal
-            $('#modalSummary').modal('show');
-        }).catch(error => {
-            Swal.fire('Error', 'Internal Server Error', 'error');
-            console.error(error);
-        });
-    }
+    //        // Mostrar modal
+    //        $('#modalSummary').modal('show');
+    //    }).catch(error => {
+    //        Swal.fire('Error', 'Internal Server Error', 'error');
+    //        console.error(error);
+    //    });
+    //}
 
     // Exportar Excel
     $('#btnExportarExcel').click(function () {
@@ -575,6 +576,9 @@ $(document).ready(function (e) {
         });
     });
 
+
+
+
     // Mostrar el card draggable de tramas
     $('#btn-tramas').click(function (e) {
         // Mostrar Tramas Draggables
@@ -591,7 +595,6 @@ $(document).ready(function (e) {
 
         // Obtener el index del botón que sería la posición del polyline
         const index = $(this).attr('id').split('-')[1];
-
         // Obtener si la trama es seleccionada o no
         const checked = $(this).prop('checked');
 
@@ -645,28 +648,31 @@ $(document).ready(function (e) {
         //of decimal places and return it.
         return val.toFixed(decimals);
     }
-
-    // Método encargado de retornar la distancia por latitud y longitud
-    function distance(lat1, lon1, lat2, lon2, unit) {
-        if ((lat1 == lat2) && (lon1 == lon2)) {
-            return 0;
-        }
-        else {
-            var radlat1 = Math.PI * lat1 / 180;
-            var radlat2 = Math.PI * lat2 / 180;
-            var theta = lon1 - lon2;
-            var radtheta = Math.PI * theta / 180;
-            var dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
-            if (dist > 1) {
-                dist = 1;
-            }
-            dist = Math.acos(dist);
-            dist = dist * 180 / Math.PI;
-            dist = dist * 60 * 1.1515;
-            if (unit == "K") { dist = dist * 1.609344 }
-            if (unit == "N") { dist = dist * 0.8684 }
-            return dist;
-        }
+    const formatAMPM = (date) => {  
+        let fecha = new Date(date);
+        return fecha.toLocaleString([], { hour12: true });
     }
+    //// Método encargado de retornar la distancia por latitud y longitud
+    //function distance(lat1, lon1, lat2, lon2, unit) {
+    //    if ((lat1 == lat2) && (lon1 == lon2)) {
+    //        return 0;
+    //    }
+    //    else {
+    //        var radlat1 = Math.PI * lat1 / 180;
+    //        var radlat2 = Math.PI * lat2 / 180;
+    //        var theta = lon1 - lon2;
+    //        var radtheta = Math.PI * theta / 180;
+    //        var dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+    //        if (dist > 1) {
+    //            dist = 1;
+    //        }
+    //        dist = Math.acos(dist);
+    //        dist = dist * 180 / Math.PI;
+    //        dist = dist * 60 * 1.1515;
+    //        if (unit == "K") { dist = dist * 1.609344 }
+    //        if (unit == "N") { dist = dist * 0.8684 }
+    //        return dist;
+    //    }
+    //}
 });
 

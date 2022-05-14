@@ -42,7 +42,7 @@
 <body>
 
     @*Draggable Card*@
-    <div id="card-draggable" style="width: 75% !important;" class="card d-none">
+    <div id="card-draggable" style="width: 60% !important;" class="card d-none">
         <div class="card-header" style="cursor: pointer;">
             <b class="text-muted">TRAMOS</b>
             <button type="button" id="close-tramas" class="close">
@@ -60,15 +60,15 @@
        
             <table id="TableMarking" class="table table-sm table-bordered">
                 <thead class="thead-dark text-muted text-center">
-                    <tr>
-                        <th>Fecha inicial</th>
-                        <th>Fecha final</th>
-                        <th>Medidor de pintura Izquierda</th>
-                        <th>Medidor de pintura Centro</th>
-                        <th>Medidor de pintura Derecha</th>
-                        <th>Total metros</th>
-                        <th>Tiempo</th>
-                        <th>Ver</th>
+                    <tr cclass="text-center">
+                        <th><i class="fa fa-calendar mr-2"></i>Fecha inicial</th>
+                        <th><i class="fa fa-calendar mr-2"></i>Fecha final</th>
+                        <th><i class="fa fa-paint-brush mr-2"></i>Medidor de pintura Izquierda</th>
+                        <th><i class="fa fa-paint-brush mr-2"></i>Medidor de pintura Centro</th>
+                        <th><i class="fa fa-paint-brush mr-2"></i>Medidor de pintura Derecha</th>
+                        <th><i class="fa fa-route mr-2"></i>Total metros</th>
+                        <th><i class="fa fa-clock mr-2"></i>Tiempo</th>
+                         <th><i class="fa fa-eye mr-2"></i>Ver Trama</th>
                     </tr>
                 </thead>
                 <tbody id="tbody-tramas" class="text-center">
@@ -80,7 +80,7 @@
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="checkAll" style="cursor: pointer;">
                 <label class="form-check-label" for="checkAll">
-                    Seleccionar todo
+                      <i class="fa fa-eye mr-2"> <strong>Ver Todo el recorrido</strong></i>
                 </label>
             </div>
         </div>

@@ -16,23 +16,9 @@ namespace Vialtec.Models
         public DateTime InitialDate { get; set; }
         public DateTime FinalDate { get; set; }
         public int TrackNumber { get; set; }
-
-
-        public double TotalMeters
-        {
-            get
-            {
-                return SumLeftPaintMeters + SumCenterPaintMeters + SumRightPaintMeters;
-            }
-        }
+        public double TotalMeters { get; set; }
         // Total de minutos
-        public string TotalMinutes
-        {
-            get
-            {
-                return $"{(FinalDate - InitialDate).TotalMinutes} Minutos";
-            }
-        }
+        public double TotalMinutes { get; set; }
     }
 
     public class TotalSummaryMarking
@@ -61,11 +47,11 @@ namespace Vialtec.Models
             }
         }
         // Total de minutos recorridos
-        public string TotalMinutesRoute
+        public double TotalMinutesRoute
         {
             get
             {
-                return $"{(FinalDateRoute - InitialDateRoute).TotalMinutes} Minutos";
+                return (FinalDateRoute - InitialDateRoute).TotalMinutes;
             }
         }
     }

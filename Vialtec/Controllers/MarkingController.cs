@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using NpgsqlTypes;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -92,10 +93,10 @@ namespace Vialtec.Controllers
         /// <param name="dateFinalComplete"></param>
         /// <returns></returns>
         [HttpPost]
-        public JsonResult GetMarkingResults(MarkingFilter filter)
+        public async Task<JsonResult> GetMarkingResults(MarkingFilter filter)
         {
             TotalSummaryMarking totales = new TotalSummaryMarking();
-
+            List<SummaryMarking> query = new List<SummaryMarking>();
             Dictionary<string, object> diccionario = new Dictionary<string, object>();
 
             var datetimeInicial = Convert.ToDateTime(filter.DateInitComplete);
@@ -110,7 +111,9 @@ namespace Vialtec.Controllers
 
             var markings = _context.Markings
                             .Where(t => t.EquipmentId == filter.EquipmentId && t.DeviceDt >= datetimeInicial && t.DeviceDt <= datetimeFinal
-                            && t.Latitude != null && t.Longitude != null && t.TrackNumber != -1).GroupBy(x => x.TrackNumber).OrderBy(x => x.Min(s => s.DeviceDt))
+                            && t.Latitude != null && t.Longitude != null && t.TrackNumber != -1)
+                            .GroupBy(x => x.TrackNumber)
+                            .OrderBy(x => x.Min(s => s.DeviceDt))
                             .Select(x => new SummaryMarking
                             {
                                 SumLeftPaintMeters = FormatDecimal(x.Sum(s => s.LeftPaintMeters)),
@@ -119,17 +122,26 @@ namespace Vialtec.Controllers
                                 FinalDate = x.Max(s => s.DeviceDt),
                                 InitialDate = x.Min(s => s.DeviceDt),
                                 TrackNumber = x.Key,
-                            }).ToList();
+                                TotalMeters = (x.Sum(s => s.LeftPaintMeters) + x.Sum(s => s.CenterPaintMeters) + x.Sum(s => s.RightPaintMeters)),
+                                TotalMinutes = (x.Max(s => s.DeviceDt) - x.Min(s => s.DeviceDt)).TotalMinutes
+                            });
 
-            if (markings.Count > 0)
+            if (filter.IgnoredMeters > 0)
             {
-                totales.TotalLeftPaintMeters = markings.Sum(x => x.SumLeftPaintMeters);
-                totales.TotalCenterPaintMeters = markings.Sum(x => x.SumCenterPaintMeters);
-                totales.TotalRightPaintMeters = markings.Sum(x => x.SumRightPaintMeters);
-                totales.InitialDateRoute = markings.Min(x => x.InitialDate);
-                totales.FinalDateRoute = markings.Max(x => x.FinalDate);
-
-                diccionario.Add("markings", markings);
+                query = await markings.Where(x => x.TotalMeters > filter.IgnoredMeters).ToListAsync();
+            }
+            else
+            {
+                query = await markings.ToListAsync();
+            }
+            if (query.Count > 0)
+            {
+                totales.TotalLeftPaintMeters = query.Sum(x => x.SumLeftPaintMeters);
+                totales.TotalCenterPaintMeters = query.Sum(x => x.SumCenterPaintMeters);
+                totales.TotalRightPaintMeters = query.Sum(x => x.SumRightPaintMeters);
+                totales.InitialDateRoute = query.Min(x => x.InitialDate);
+                totales.FinalDateRoute = query.Max(x => x.FinalDate);
+                diccionario.Add("markings", query);
                 diccionario.Add("totales", totales);
                 diccionario.Add("valido", true);
                 return Json(diccionario);
@@ -151,12 +163,15 @@ namespace Vialtec.Controllers
         {
             DateTime final = DateTime.Parse(markingMapFilter.FinalDate);
             DateTime inicial = DateTime.Parse(markingMapFilter.InitialDate);
-            var markings = (from t in _context.Markings
-                            where t.TrackNumber == markingMapFilter.TrackNumber
-                             && t.DeviceDt >= inicial && t.DeviceDt <= final
-                             && t.Latitude != null && t.Longitude != null
-                            orderby t.DeviceDt
-                            select new { t.Latitude, t.Longitude, t.DeviceDt, t.TrackNumber }).ToList();
+            var markings = from t in _context.Markings
+                           where t.TrackNumber == markingMapFilter.TrackNumber
+                            && t.DeviceDt >= inicial && t.DeviceDt <= final
+                            && t.Latitude != null && t.Longitude != null
+                           orderby t.DeviceDt ascending
+                           select new { t.Latitude, t.Longitude, t.DeviceDt, t.TrackNumber };
+
+
+            markings = markings.Take(markings.Count() - 1);
             return Json(markings);
         }
 
@@ -221,8 +236,9 @@ namespace Vialtec.Controllers
 
             return Json(summary);
         }
-        #region Generar excel con datos Clase Reporte
 
+
+        #region Generar excel con datos Clase Reporte
         [HttpPost]
         public IActionResult GenerateExcel([FromBody] IEnumerable<ReportMarking> reporte)
         {

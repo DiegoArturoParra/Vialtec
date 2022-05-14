@@ -5,6 +5,7 @@
         public int EquipmentId { get; set; }
         public string DateInitComplete { get; set; }
         public string DateFinalComplete { get; set; }
+        public double IgnoredMeters { get; set; }
     }
 
     public class MarkingMapFilter
