@@ -86,12 +86,12 @@ namespace Vialtec.Controllers
         }
 
         /// <summary>
+        /// <summary>
+        /// <author>Diego Parra</author>
         /// Se encarga de obtener los registros del reporte de demarcación
         /// </summary>
-        /// <param name="equipmentId"></param>
-        /// <param name="dateInitComplete"></param>
-        /// <param name="dateFinalComplete"></param>
-        /// <returns></returns>
+        /// <param name="filter">parametro para filtrar por EquipmentId, DateInitComplete,DateFinalComplete,IgnoredMeters </param>
+        /// <returns></returns>                                                          
         [HttpPost]
         public async Task<JsonResult> GetMarkingResults(MarkingFilter filter)
         {
@@ -102,64 +102,72 @@ namespace Vialtec.Controllers
             var datetimeInicial = Convert.ToDateTime(filter.DateInitComplete);
             var datetimeFinal = Convert.ToDateTime(filter.DateFinalComplete);
 
-            //var markings = from t in _context.Markings
-            //               where t.EquipmentId == filter.EquipmentId
-            //                && t.DeviceDt >= datetimeInicial && t.DeviceDt <= datetimeFinal
-            //                && t.Latitude != null && t.Longitude != null
-            //               orderby t.DeviceDt
-            //               select t;
-
-            var markings = _context.Markings
-                            .Where(t => t.EquipmentId == filter.EquipmentId && t.DeviceDt >= datetimeInicial && t.DeviceDt <= datetimeFinal
-                            && t.Latitude != null && t.Longitude != null && t.TrackNumber != -1)
-                            .GroupBy(x => x.TrackNumber)
-                            .OrderBy(x => x.Min(s => s.DeviceDt))
-                            .Select(x => new SummaryMarking
-                            {
-                                SumLeftPaintMeters = FormatDecimal(x.Sum(s => s.LeftPaintMeters)),
-                                SumCenterPaintMeters = FormatDecimal(x.Sum(s => s.CenterPaintMeters)),
-                                SumRightPaintMeters = FormatDecimal(x.Sum(s => s.RightPaintMeters)),
-                                FinalDate = x.Max(s => s.DeviceDt),
-                                InitialDate = x.Min(s => s.DeviceDt),
-                                TrackNumber = x.Key,
-                                TotalMeters = (x.Sum(s => s.LeftPaintMeters) + x.Sum(s => s.CenterPaintMeters) + x.Sum(s => s.RightPaintMeters)),
-                                TotalMinutes = (x.Max(s => s.DeviceDt) - x.Min(s => s.DeviceDt)).TotalMinutes
-                            });
-
-            if (filter.IgnoredMeters > 0)
+            var justOneDay = (datetimeFinal - datetimeInicial).TotalHours;
+            if (justOneDay <= 24)
             {
-                query = await markings.Where(x => x.TotalMeters > filter.IgnoredMeters).ToListAsync();
+                var markings = _context.Markings
+                                .Where(t => t.EquipmentId == filter.EquipmentId && t.DeviceDt >= datetimeInicial && t.DeviceDt <= datetimeFinal
+                                && t.Latitude != null && t.Longitude != null && t.TrackNumber != -1)
+                                .GroupBy(x => x.TrackNumber)
+                                .OrderBy(x => x.Min(s => s.DeviceDt))
+                                .Select(x => new SummaryMarking
+                                {
+                                    SumLeftPaintMeters = FormatDecimal(x.Sum(s => s.LeftPaintMeters)),
+                                    SumCenterPaintMeters = FormatDecimal(x.Sum(s => s.CenterPaintMeters)),
+                                    SumRightPaintMeters = FormatDecimal(x.Sum(s => s.RightPaintMeters)),
+                                    FinalDate = x.Max(s => s.DeviceDt),
+                                    InitialDate = x.Min(s => s.DeviceDt),
+                                    TrackNumber = x.Key,
+                                    TotalMeters = (x.Sum(s => s.LeftPaintMeters)
+                                    + x.Sum(s => s.CenterPaintMeters)
+                                    + x.Sum(s => s.RightPaintMeters)),
+                                    TotalMinutes = (x.Max(s => s.DeviceDt) - x.Min(s => s.DeviceDt)).TotalMinutes
+                                });
+
+                if (filter.IgnoredMeters > 0)
+                {
+                    query = await markings.Where(x => x.TotalMeters > filter.IgnoredMeters).ToListAsync();
+                }
+                else
+                {
+                    query = await markings.ToListAsync();
+                }
+                if (query.Count > 0)
+                {
+                    totales.TotalLeftPaintMeters = query.Sum(x => x.SumLeftPaintMeters);
+                    totales.TotalCenterPaintMeters = query.Sum(x => x.SumCenterPaintMeters);
+                    totales.TotalRightPaintMeters = query.Sum(x => x.SumRightPaintMeters);
+                    totales.InitialDateRoute = query.Min(x => x.InitialDate);
+                    totales.FinalDateRoute = query.Max(x => x.FinalDate);
+                    diccionario.Add("markings", query);
+                    diccionario.Add("totales", totales);
+                    diccionario.Add("valido", true);
+                    diccionario.Add("justOneDay", justOneDay);
+                }
+                else
+                {
+                    diccionario.Add("justOneDay", 0);
+                    diccionario.Add("valido", false);
+                }
             }
             else
             {
-                query = await markings.ToListAsync();
+                diccionario.Add("justOneDay", -1);
+                diccionario.Add("valido", false);
             }
-            if (query.Count > 0)
-            {
-                totales.TotalLeftPaintMeters = query.Sum(x => x.SumLeftPaintMeters);
-                totales.TotalCenterPaintMeters = query.Sum(x => x.SumCenterPaintMeters);
-                totales.TotalRightPaintMeters = query.Sum(x => x.SumRightPaintMeters);
-                totales.InitialDateRoute = query.Min(x => x.InitialDate);
-                totales.FinalDateRoute = query.Max(x => x.FinalDate);
-                diccionario.Add("markings", query);
-                diccionario.Add("totales", totales);
-                diccionario.Add("valido", true);
-                return Json(diccionario);
-            }
-            diccionario.Add("valido", false);
             return Json(diccionario);
         }
 
 
         /// <summary>
-        /// 
+        /// <author>Diego Parra</author>
         /// </summary>
         /// <param name="TrackNumber"></param>
         /// <param name="InitialDate"></param>
         /// <param name="FinalDate"></param>
         /// <returns></returns>
         [HttpPost]
-        public JsonResult GetMarkingByTrackNumber(MarkingMapFilter markingMapFilter)
+        public async Task<JsonResult> GetMarkingByTrackNumber(MarkingMapFilter markingMapFilter)
         {
             DateTime final = DateTime.Parse(markingMapFilter.FinalDate);
             DateTime inicial = DateTime.Parse(markingMapFilter.InitialDate);
@@ -170,8 +178,11 @@ namespace Vialtec.Controllers
                            orderby t.DeviceDt ascending
                            select new { t.Latitude, t.Longitude, t.DeviceDt, t.TrackNumber };
 
-
-            markings = markings.Take(markings.Count() - 1);
+            int count = await markings.CountAsync();
+            if (count > 1)
+            {
+                markings = markings.Take(count - 1);
+            }
             return Json(markings);
         }
 

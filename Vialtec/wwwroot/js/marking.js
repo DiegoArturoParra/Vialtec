@@ -329,11 +329,18 @@ $(document).ready(function (e) {
             dataType: "json",
             type: "POST"
         }).done(function (results) {
-            if (results.valido) {
-                showReportMarkings(results.markings, results.totales);
+            if (results.justOneDay > 0) {
+                if (results.valido) {
+                    showReportMarkings(results.markings, results.totales);
+                }
             }
             else {
-                Swal.fire('Warning', 'No se encontraron resultados para la búsqueda', 'warning');
+                if (results.justOneDay == -1) {
+                    Swal.fire('Warning', 'Solo se permite un rango de un dia.', 'warning');
+                }
+                else if (results.justOneDay == 0) {
+                    Swal.fire('Warning', 'No se encontraron resultados para la búsqueda.', 'warning');
+                }
             }
         }).fail(function (xhr, status, error) {
             Swal.fire('Error', error, 'error' + status);
@@ -392,9 +399,9 @@ $(document).ready(function (e) {
             <tr id="trama-row-totales">
                 <td class="total-trama-fecha-inicial">${formatAMPM(totales.initialDateRoute)}</td>
                 <td class="total-trama-fecha-final">${formatAMPM(totales.finalDateRoute)}</td>
-                <td class="total-trama-pintura-izquierda">${totales.totalLeftPaintMeters}</td>
-                <td class="total-trama-pintura-Centro">${totales.totalCenterPaintMeters}</td>
-                <td class="total-trama-pintura-Derecha">${totales.totalRightPaintMeters}</td>
+                <td class="total-trama-pintura-izquierda">${number_format(totales.totalLeftPaintMeters)}</td>
+                <td class="total-trama-pintura-Centro">${number_format(totales.totalCenterPaintMeters)}</td>
+                <td class="total-trama-pintura-Derecha">${number_format(totales.totalRightPaintMeters)}</td>
                 <td class="total-trama-total-metros">${number_format(totales.totalPaintMetersRoute, 2)}</td>
                 <td class="total-trama-total-tiempo">${number_format(totales.totalMinutesRoute, 2)} min</td>
             </tr> `;
@@ -648,7 +655,7 @@ $(document).ready(function (e) {
         //of decimal places and return it.
         return val.toFixed(decimals);
     }
-    const formatAMPM = (date) => {  
+    const formatAMPM = (date) => {
         let fecha = new Date(date);
         return fecha.toLocaleString([], { hour12: true });
     }
